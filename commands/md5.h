@@ -14,13 +14,13 @@
 // https://en.wikipedia.org/wiki/MD5
 // https://www.herongyang.com/Cryptography/MD5-Message-Digest-Algorithm-Overview.html
 
-static const uint8_t	s[64] = {
+static const uint8_t	md5_round_shift[64] = {
 	7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
 	5,  9, 14, 20, 5,  9, 14, 20, 5,  9, 14, 20, 5,  9, 14, 20,
 	4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
 	6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21,
 };
-static const uint32_t	K[64] = {
+static const uint32_t	md5_integer_sin[64] = {
 	0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee, 0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
 	0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be, 0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821,
 	0xf61e2562, 0xc040b340, 0x265e5a51, 0xe9b6c7aa, 0xd62f105d, 0x02441453, 0xd8a1e681, 0xe7d3fbc8,
@@ -35,11 +35,11 @@ uint32_t	leftrotate(uint32_t n, uint8_t offset) {
 	return ((n << offset) | (n >> (32 - offset)));
 }
 
-void		md5_init_chunk_buffer(uint8_t *buffer, const string_t str, size_t i) {
+void		md5_init_chunk_buffer(uint8_t *buffer, const string_t input, size_t i) {
 	size_t j = 0;
 	
-	while (j < 64 && i < str.len) {
-		buffer[j] = str.ptr[i];
+	while (j < 64 && i < input.len) {
+		buffer[j] = input.ptr[i];
 		++j;
 		++i;
 	}
@@ -56,13 +56,13 @@ void		md5_init_chunk_buffer(uint8_t *buffer, const string_t str, size_t i) {
 	if (j >= 64)
 		return ;
 
-	uint64_t	message_size = str.len * 8;
+	uint64_t	message_size = input.len * 8;
 	for (uint8_t b = 0; b < 8;) {
 		buffer[j++] = ((uint8_t *)&message_size)[8 - ++b];
 	}
 }
 
-void		md5_chunk(uint32_t *digest, uint32_t *M) {
+void		md5_chunk(uint32_t *digest, uint32_t *input) {
 	uint32_t	a = digest[0];
 	uint32_t	b = digest[1];
 	uint32_t	c = digest[2];
@@ -92,7 +92,7 @@ void		md5_chunk(uint32_t *digest, uint32_t *M) {
 		uint32_t temp = d;
 		d = c;
 		c = b;
-		b = b + leftrotate(a + F + K[i] + swap_uint32(M[g]), s[i]);
+		b = b + leftrotate(a + F + md5_integer_sin[i] + input[g], md5_round_shift[i]);
 		a = temp;
 	}
 
@@ -102,7 +102,7 @@ void		md5_chunk(uint32_t *digest, uint32_t *M) {
 	digest[3] += d;
 }
 
-string_t	md5_hash(const string_t str) {
+string_t	md5_hash(const string_t input) {
 	uint32_t	*digest = malloc(4 * sizeof(uint32_t));
 	digest[0] = 0x67452301;
 	digest[1] = 0xefcdab89;
@@ -110,12 +110,12 @@ string_t	md5_hash(const string_t str) {
 	digest[3] = 0x10325476;
 
 	// 1 extra byte for the separator and 8 for the length
-	size_t		byte_count = str.len + 9;
+	size_t		byte_count = input.len + 9;
 
 	for (size_t i = 0; i < byte_count; i += 64) {
 		static uint8_t		buffer[64];
 
-		md5_init_chunk_buffer(buffer, str, i);
+		md5_init_chunk_buffer(buffer, input, i);
 
 		printf("--- CHUNK ---\n");
 		// hexdump_with_preview(buffer);
