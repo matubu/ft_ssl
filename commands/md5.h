@@ -89,11 +89,11 @@ string_t	md5_hash(const string_t str) {
 		for (int i = 0; i < 64; ++i) {
 			uint32_t	F, g;
 			if (i < 16) {
-				F = (b & c) | ((~b) & d);
+				F = d ^ (b & (c ^ d));
 				g = i;
 			}
 			else if (i < 32) {
-				F = (d & b) | ((~d) & c);
+				F = c ^ (d & (b ^ c));
 				g = (5 * i + 1) % 16;
 			}
 			else if (i < 48) {
@@ -104,12 +104,11 @@ string_t	md5_hash(const string_t str) {
 				F = c ^ (b | (~d));
 				g = (7 * i) % 16;
 			}
-			uint32_t tmp = d;
 			F += a + K[i] + M[g];
+			a = d;
 			d = c;
 			c = b;
 			b = b + leftrotate(F, s[i]);
-			a = tmp;
 		}
 
 		digest[0] += a;
