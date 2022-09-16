@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 #define PUTS(s) write(2, s "\n", sizeof(s))
 
 typedef struct {

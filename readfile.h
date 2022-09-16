@@ -21,11 +21,11 @@ string_t	readfile(const char *filename) {
 		usage();
 	}
 
+	uint8_t		*ptr = malloc(stat.st_size);
 	string_t	string = {
-		.ptr = malloc(stat.st_size)
+		.ptr = ptr,
+		.len = read(fd, ptr, stat.st_size)
 	};
-
-	string.len = read(fd, string.ptr, stat.st_size);
 
 	close(fd);
 

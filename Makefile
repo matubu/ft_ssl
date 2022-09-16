@@ -1,7 +1,7 @@
 Name = ft_ssl
 Srcs = main.c
 Deps = $(shell find . -type f -name '*.h') Makefile
-Flag = -Wall -Wextra -Werror -Ofast -I.
+Flag = -Wall -Wextra -Werror -I.
 
 all: $(Name)
 
