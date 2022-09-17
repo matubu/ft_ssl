@@ -8,7 +8,7 @@
 
 typedef struct {
 	char		*name;
-	string_t	(*hash_fn)(const string_t);
+	string_t	(*hash_fn)(const string_t *);
 }	command_t;
 
 int	main(int ac, const char **av) {
@@ -29,7 +29,7 @@ int	main(int ac, const char **av) {
 
 	for (int i = 0; i < commands_count; ++i) {
 		if (cmp(command, commands[i].name) == 0) {
-			string_t	hash = commands[i].hash_fn(file);
+			string_t	hash = commands[i].hash_fn(&file);
 
 			hexdump(hash);
 

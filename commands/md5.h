@@ -4,11 +4,6 @@
 #include "string.h"
 #include "endianess.h"
 
-#include "hexdump.h"
-#include "bindump.h"
-
-#include <stdio.h>
-
 // nice links:
 // https://fthb321.github.io/MD5-Hash/MD5OurVersion2.html
 // https://en.wikipedia.org/wiki/MD5
@@ -35,11 +30,11 @@ uint32_t	leftrotate(uint32_t n, uint8_t offset) {
 	return ((n << offset) | (n >> (32 - offset)));
 }
 
-void		md5_init_chunk_buffer(uint8_t *buffer, const string_t input, size_t i) {
+void		md5_init_chunk_buffer(uint8_t *buffer, const string_t *input, size_t i) {
 	size_t j = 0;
 	
-	while (j < 64 && i < input.len) {
-		buffer[j] = input.ptr[i];
+	while (j < 64 && i < input->len) {
+		buffer[j] = input->ptr[i];
 		++j;
 		++i;
 	}
@@ -56,10 +51,7 @@ void		md5_init_chunk_buffer(uint8_t *buffer, const string_t input, size_t i) {
 	if (j >= 64)
 		return ;
 
-	uint64_t	message_size = input.len * 8;
-	for (uint8_t b = 0; b < 8;) {
-		buffer[j++] = ((uint8_t *)&message_size)[8 - ++b];
-	}
+	*(uint64_t *)&buffer[j] = input->len * 8;
 }
 
 void		md5_chunk(uint32_t *digest, uint32_t *input) {
@@ -68,24 +60,24 @@ void		md5_chunk(uint32_t *digest, uint32_t *input) {
 	uint32_t	c = digest[2];
 	uint32_t	d = digest[3];
 
-	for (int i = 0; i < 64; ++i) {
-		uint32_t	F, g;
+	uint32_t	F, g;
 
+	for (size_t i = 0; i < 64; ++i) {
 		if (i < 16) {
 			F = d ^ (b & (c ^ d));
 			g = i;
 		}
 		else if (i < 32) {
 			F = c ^ (d & (b ^ c));
-			g = (5 * i + 1) % 16;
+			g = (i * 5 + 1) % 16;
 		}
 		else if (i < 48) {
 			F = b ^ c ^ d;
-			g = (3 * i + 5) % 16;
+			g = (i * 3 + 5) % 16;
 		}
 		else {
 			F = c ^ (b | (~d));
-			g = (7 * i) % 16;
+			g = (i * 7) % 16;
 		}
 
 
@@ -102,25 +94,20 @@ void		md5_chunk(uint32_t *digest, uint32_t *input) {
 	digest[3] += d;
 }
 
-string_t	md5_hash(const string_t input) {
+string_t	md5_hash(const string_t *input) {
 	uint32_t	*digest = malloc(4 * sizeof(uint32_t));
 	digest[0] = 0x67452301;
 	digest[1] = 0xefcdab89;
 	digest[2] = 0x98badcfe;
 	digest[3] = 0x10325476;
 
-	// 1 extra byte for the separator and 8 for the length
-	size_t		byte_count = input.len + 9;
+	// 1 extra byte for the separator and 8 for the 64 bits length
+	size_t		byte_count = input->len + 9;
 
 	for (size_t i = 0; i < byte_count; i += 64) {
 		static uint8_t		buffer[64];
 
 		md5_init_chunk_buffer(buffer, input, i);
-
-		printf("--- CHUNK ---\n");
-		// hexdump_with_preview(buffer);
-		bindump((string_t){ .ptr = buffer, .len = sizeof(buffer) });
-
 		md5_chunk(digest, (uint32_t *)buffer);
 	}
 
