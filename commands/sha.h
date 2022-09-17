@@ -28,7 +28,7 @@ void		sha256_chunk(uint32_t *digest, uint32_t *input) {
 	uint32_t	w[64];
 	// Copy the chunk 16 words
 	for (size_t i = 0; i < 16; ++i) {
-		w[i] = input[i];
+		w[i] = swap_uint32(input[i]);
 	}
 	//  Extend the first 16 words into the remaining 48 words w[16..63] of the message schedule array:
 	for (size_t i = 16; i < 64; ++i) {
@@ -88,12 +88,15 @@ string_t	sha256_hash(const string_t *input) {
 	// 1 extra byte for the separator and 8 for the 64 bits length
 	size_t		byte_count = input->len + 9;
 
-	for (size_t i = 0; i < byte_count; i += 64) {
-		static uint8_t	buffer[64];
+	uint8_t	buffer[64];
 
+	for (size_t i = 0; i < byte_count; i += 64) {
 		init_chunk_buffer(buffer, input, i, SHA256_PADDING_OPT);
 		sha256_chunk(digest, (uint32_t *)buffer);
 	}
 
+	for (size_t i = 0; i < 8; ++i) {
+		digest[i] = uint32_endianess(digest[i], BIG_ENDIAN);
+	}
 	return ((string_t){ .ptr = (uint8_t *)digest, .len = 8 * sizeof(*digest) });
 }

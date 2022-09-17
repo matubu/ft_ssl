@@ -82,9 +82,9 @@ string_t	md5_hash(const string_t *input) {
 	// 1 extra byte for the separator and 8 for the 64 bits length
 	size_t		byte_count = input->len + 9;
 
-	for (size_t i = 0; i < byte_count; i += 64) {
-		static uint8_t	buffer[64];
+	uint8_t	buffer[64];
 
+	for (size_t i = 0; i < byte_count; i += 64) {
 		init_chunk_buffer(buffer, input, i, MD5_PADDING_OPT);
 		md5_chunk(digest, (uint32_t *)buffer);
 	}
