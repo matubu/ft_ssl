@@ -3,11 +3,17 @@
 #include "malloc.h"
 #include "string.h"
 #include "endianess.h"
+#include "utils.h"
 
 // nice links:
 // https://fthb321.github.io/MD5-Hash/MD5OurVersion2.html
 // https://en.wikipedia.org/wiki/MD5
 // https://www.herongyang.com/Cryptography/MD5-Message-Digest-Algorithm-Overview.html
+
+#define MD5_PADDING_OPT (&(padding_opt){ \
+	.chunk_byte_count = 64, \
+	.length_byte_order = LITTLE_ENDIAN, \
+})
 
 static const uint8_t	md5_round_shift[64] = {
 	7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
@@ -15,7 +21,7 @@ static const uint8_t	md5_round_shift[64] = {
 	4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
 	6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21,
 };
-static const uint32_t	md5_integer_sin[64] = {
+static const uint32_t	md5_sin[64] = {
 	0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee, 0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
 	0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be, 0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821,
 	0xf61e2562, 0xc040b340, 0x265e5a51, 0xe9b6c7aa, 0xd62f105d, 0x02441453, 0xd8a1e681, 0xe7d3fbc8,
@@ -25,34 +31,6 @@ static const uint32_t	md5_integer_sin[64] = {
 	0xf4292244, 0x432aff97, 0xab9423a7, 0xfc93a039, 0x655b59c3, 0x8f0ccc92, 0xffeff47d, 0x85845dd1,
 	0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1, 0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391,
 };
-
-uint32_t	leftrotate(uint32_t n, uint8_t offset) {
-	return ((n << offset) | (n >> (32 - offset)));
-}
-
-void		md5_init_chunk_buffer(uint8_t *buffer, const string_t *input, size_t i) {
-	size_t j = 0;
-	
-	while (j < 64 && i < input->len) {
-		buffer[j] = input->ptr[i];
-		++j;
-		++i;
-	}
-
-	if (j >= 64)
-		return ;
-
-	buffer[j++] = 0x80;
-
-	while (j < 64 && j % 64 != 56) {
-		buffer[j++] = 0;
-	}
-
-	if (j >= 64)
-		return ;
-
-	*(uint64_t *)&buffer[j] = input->len * 8;
-}
 
 void		md5_chunk(uint32_t *digest, uint32_t *input) {
 	uint32_t	a = digest[0];
@@ -80,11 +58,10 @@ void		md5_chunk(uint32_t *digest, uint32_t *input) {
 			g = (i * 7) % 16;
 		}
 
-
 		uint32_t temp = d;
 		d = c;
 		c = b;
-		b = b + leftrotate(a + F + md5_integer_sin[i] + input[g], md5_round_shift[i]);
+		b = b + leftrotate(a + F + md5_sin[i] + input[g], md5_round_shift[i]);
 		a = temp;
 	}
 
@@ -94,8 +71,9 @@ void		md5_chunk(uint32_t *digest, uint32_t *input) {
 	digest[3] += d;
 }
 
+
 string_t	md5_hash(const string_t *input) {
-	uint32_t	*digest = malloc(4 * sizeof(uint32_t));
+	uint32_t	*digest = malloc(4 * sizeof(*digest));
 	digest[0] = 0x67452301;
 	digest[1] = 0xefcdab89;
 	digest[2] = 0x98badcfe;
@@ -105,11 +83,11 @@ string_t	md5_hash(const string_t *input) {
 	size_t		byte_count = input->len + 9;
 
 	for (size_t i = 0; i < byte_count; i += 64) {
-		static uint8_t		buffer[64];
+		static uint8_t	buffer[64];
 
-		md5_init_chunk_buffer(buffer, input, i);
+		init_chunk_buffer(buffer, input, i, MD5_PADDING_OPT);
 		md5_chunk(digest, (uint32_t *)buffer);
 	}
 
-	return ((string_t){ .ptr = (uint8_t *)digest, .len = 16 });
+	return ((string_t){ .ptr = (uint8_t *)digest, .len = 4 * sizeof(*digest) });
 }
