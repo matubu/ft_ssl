@@ -30,7 +30,7 @@ int	cmp(const char *a, const char *b) {
 }
 
 uint64_t	slen(const uint8_t *s) {
-	uint64_t	len;
+	uint64_t	len = 0;
 
 	while (*s)
 	{

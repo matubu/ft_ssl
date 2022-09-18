@@ -1,7 +1,7 @@
 Name = ft_ssl
 Srcs = main.c
 Deps = $(shell find . -type f -name '*.h') Makefile
-Flag = -Wall -Wextra -Werror -I. #-fsanitize=address
+Flag = -Wall -Wextra -Werror -I. -g -fsanitize=address
 
 all: $(Name)
 

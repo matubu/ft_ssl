@@ -7,24 +7,29 @@
 #include "malloc.h"
 #include "string.h"
 
-string_t	readfile(const char *filename) {
+int	readfile(const char *filename, string_t *string) {
 	int	fd = open(filename, O_RDONLY);
 	if (fd < 0) {
-		DIE("cannot open file");
+		ERROR("cannot open file");
+		return (-1);
 	}
 
 	struct stat	stat;
 	if (fstat(fd, &stat) < 0) {
-		DIE("cannot stat file");
+		ERROR("cannot stat file");
+		return (-1);
 	}
 
-	uint8_t		*ptr = malloc(stat.st_size);
-	string_t	string = {
-		.ptr = ptr,
-		.len = read(fd, ptr, stat.st_size)
-	};
+	string->ptr = malloc(stat.st_size);
+	ssize_t	len = read(fd, string->ptr, stat.st_size);
+	if (len < 0) {
+		ERROR("cannot read file");
+		free(string->ptr);
+		return (-1);
+	}
+	string->len = len;
 
 	close(fd);
 
-	return (string);
+	return (0);
 }

@@ -87,7 +87,11 @@ arguments_t	parse_arguments(const char **av) {
 	}
 
 	while (*av) {
-		push_input(&args.inputs, *av, readfile(*av));
+		string_t	file;
+
+		if (readfile(*av, &file) == 0) {
+			push_input(&args.inputs, *av, file);
+		}
 		++av;
 	}
 
@@ -100,6 +104,10 @@ arguments_t	parse_arguments(const char **av) {
 
 #include <stdio.h>
 
+// TODO remove printf
+// TODO support flags
+// TODO add new commands
+// TODO support stdin command
 int	main(int ac, const char **av) {
 	(void)ac;
 	arguments_t	opt = parse_arguments(av + 1);
