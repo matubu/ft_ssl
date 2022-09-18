@@ -4,9 +4,8 @@
 #include "hexdump.h"
 
 #include "commands/md5.h"
-#include "commands/sha.h"
+#include "commands/sha256.h"
 
-// TODO add support for sha224, sha384, sha512, whirlpool
 // BUG if none of the files could be open, the program read stdin, but should not
 
 typedef struct {
@@ -31,6 +30,12 @@ typedef struct {
 const command_t	commands[] = {
 	{ .name = "md5", .fn = md5_hash },
 	{ .name = "sha256", .fn = sha256_hash },
+
+	// sm3        https://en.wikipedia.org/wiki/SM3_(hash_function)
+	// whirlpool  https://en.wikipedia.org/wiki/Whirlpool_(hash_function)
+	// blake2s256 https://www.rfc-editor.org/rfc/rfc7693
+	// rmd160     https://en.wikipedia.org/wiki/RIPEMD
+	// shake256   https://www.rfc-editor.org/rfc/rfc8702
 };
 
 const command_t	*get_command(const char *command) {
