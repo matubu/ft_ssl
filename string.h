@@ -1,25 +1,13 @@
 #pragma once
 
 #include <stdint.h>
-#include <unistd.h>
+#include </usr/include/string.h>
 
-#define PUTS(s) write(2, s "\n", sizeof(s))
+#include "malloc.h"
 
-void	usage(void) {
-	PUTS("usage: ft_ssl command [flags] [file/string]");
-	PUTS("");
-	PUTS("Flags:");
-	PUTS("  -p          echo STDIN to STDOUT and append the checksum to STDOUT");
-	PUTS("  -q          quiet mode");
-	PUTS("  -r          reverse the format of the output");
-	PUTS("  -s STRING   print the sum of the given string");
-	PUTS("");
-	PUTS("Commands: md5, sha256");
-	exit(1);
+int	is_print(char c) {
+	return (c >= ' ' && c <= '~');
 }
-#define ERROR(s) PUTS("ft_ssl: \x1b[91mError\x1b[0m: " s)
-#define DIE(s) { ERROR(s); exit(1); }
-#define HELP_AND_DIE(s) { ERROR(s); usage(); }
 
 int	cmp(const char *a, const char *b) {
 	while (*a && *a == *b) {
@@ -44,6 +32,10 @@ typedef struct {
 	uint8_t	*ptr;
 	size_t	len;
 }	string_t;
+
+string_t	string(uint8_t *s) {
+	return ((string_t){ .ptr = s, .len = slen(s) });
+}
 
 string_t	stringdup(const char *s) {
 	uint64_t	len = slen((uint8_t *)s);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "string.h"
+#include "io.h"
 
 void	write_boolean(int boolean) {
 	write(1, &"10"[!boolean], 1);

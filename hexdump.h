@@ -1,21 +1,11 @@
 #pragma once
 
-#include "string.h"
-
-void	hex(uint8_t c) {
-	write(1, &"0123456789abcdef"[c >> 4], 1);
-	write(1, &"0123456789abcdef"[c & 0x0f], 1);
-}
-
-int	is_print(char c) {
-	return (c >= ' ' && c <= '~');
-}
+#include "io.h"
 
 void	hexdump(string_t s) {
 	for (size_t i = 0; i < s.len; ++i) {
 		hex(s.ptr[i]);
 	}
-	write(1, "\n", 1);
 }
 
 void	hexdump_with_preview(string_t s) {
