@@ -5,6 +5,7 @@
 #include "endianess.h"
 #include "utils.h"
 
+// command: openssl md5
 // nice links:
 // https://fthb321.github.io/MD5-Hash/MD5OurVersion2.html
 // https://en.wikipedia.org/wiki/MD5
@@ -14,6 +15,7 @@
 	.chunk_byte_count = 64, \
 	.length_byte_order = LITTLE_ENDIAN, \
 })
+#define MD5_DIGEST_LENGTH (4 * sizeof(uint32_t))
 
 static const uint8_t	md5_round_shift[64] = {
 	7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
@@ -73,7 +75,7 @@ void		md5_chunk(uint32_t *digest, uint32_t *input) {
 
 
 string_t	md5_hash(const string_t *input) {
-	uint32_t	*digest = malloc(4 * sizeof(*digest));
+	uint32_t	*digest = malloc(MD5_DIGEST_LENGTH);
 	digest[0] = 0x67452301;
 	digest[1] = 0xefcdab89;
 	digest[2] = 0x98badcfe;
@@ -82,12 +84,12 @@ string_t	md5_hash(const string_t *input) {
 	// 1 extra byte for the separator and 8 for the 64 bits length
 	size_t		byte_count = input->len + 9;
 
-	uint8_t	buffer[64];
+	uint8_t		buffer[64];
 
 	for (size_t i = 0; i < byte_count; i += 64) {
 		init_chunk_buffer(buffer, input, i, MD5_PADDING_OPT);
 		md5_chunk(digest, (uint32_t *)buffer);
 	}
 
-	return ((string_t){ .ptr = (uint8_t *)digest, .len = 4 * sizeof(*digest) });
+	return ((string_t){ .ptr = (uint8_t *)digest, .len = MD5_DIGEST_LENGTH });
 }

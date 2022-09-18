@@ -16,6 +16,7 @@ void	usage(void) {
 	PUTS("  -r          reverse the format of the output");
 	PUTS("  -s STRING   print the sum of the given string");
 	PUTS("");
+	// TODO dynamic depending on commands array
 	PUTS("Commands: md5, sha256");
 	exit(1);
 }
