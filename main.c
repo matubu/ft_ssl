@@ -2,18 +2,10 @@
 #include "io.h"
 #include "readfile.h"
 #include "hexdump.h"
-
-#include "commands/md5.h"
-#include "commands/sha256.h"
-#include "commands/sm3.h"
+#include "commands.h"
 
 // BUG if none of the files could be open, the program read stdin, but should not
 // TODO debug flag to compare with real hash
-
-typedef struct {
-	char		*name;
-	string_t	(*fn)(const string_t *);
-}	command_t;
 
 typedef struct input_list_s {
 	string_t			display_str;
@@ -29,29 +21,25 @@ typedef struct {
 	input_list_t	*inputs;        // Needs to be free
 }	arguments_t;
 
-const command_t	commands[] = {
-	{ .name = "md5", .fn = md5_hash },
-	{ .name = "sha256", .fn = sha256_hash },
-	{ .name = "sm3", .fn = sm3_hash },
-
-	// sm3        https://en.wikipedia.org/wiki/SM3_(hash_function)
-	// whirlpool  https://en.wikipedia.org/wiki/Whirlpool_(hash_function)
-	// blake2s256 https://www.rfc-editor.org/rfc/rfc7693
-	// rmd160     https://en.wikipedia.org/wiki/RIPEMD
-	// shake256   https://www.rfc-editor.org/rfc/rfc8702
-	// Tiger
-};
-
-const command_t	*get_command(const char *command) {
-	size_t	commands_count = sizeof(commands) / sizeof(commands[0]);
-
+void	usage(void) {
+	PUTS("usage: ft_ssl command [flags] [file/string]");
+	PUTS("");
+	PUTS("Flags:");
+	PUTS("  -p          echo STDIN to STDOUT and append the checksum to STDOUT");
+	PUTS("  -q          quiet mode");
+	PUTS("  -r          reverse the format of the output");
+	PUTS("  -s STRING   print the sum of the given string");
+	PUTS("");
+	// TODO dynamic depending on commands array
+	PUTSTR("Commands: ");
 	for (size_t i = 0; i < commands_count; ++i) {
-		if (cmp(command, commands[i].name) == 0) {
-			return (&commands[i]);
+		if (i) {
+			PUTSTR(", ");
 		}
+		putstr(commands[i].name);
 	}
-	HELP_AND_DIE("no such command");
-	return (NULL);
+	PUTS("");
+	exit(1);
 }
 
 void	push_input(input_list_t **lst, string_t display_str, string_t str) {

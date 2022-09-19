@@ -4,44 +4,18 @@
 #include <errno.h>
 #include <stdint.h>
 
+#include "string.h"
+
 #define PUTSTR(s) write(1, s, sizeof(s) - 1)
 #define PUTS(s) PUTSTR(s "\n")
 
-void	usage(void) {
-	PUTS("usage: ft_ssl command [flags] [file/string]");
-	PUTS("");
-	PUTS("Flags:");
-	PUTS("  -p          echo STDIN to STDOUT and append the checksum to STDOUT");
-	PUTS("  -q          quiet mode");
-	PUTS("  -r          reverse the format of the output");
-	PUTS("  -s STRING   print the sum of the given string");
-	PUTS("");
-	// TODO dynamic depending on commands array
-	PUTS("Commands: md5, sha256");
-	exit(1);
+void	putstr(const char *s) {
+	write(1, s, slen((const uint8_t *)s));
 }
-#define ERROR(...) { \
-	const char	*args[] = { __VA_ARGS__ }; \
-	PUTSTR("ft_ssl: \x1b[91mError\x1b[0m"); \
-	size_t	count = sizeof(args) / sizeof(*args); \
-	for (size_t i = 0; i < count; ++i) { \
-		PUTSTR(": "); \
-		putstr(args[i]); \
-	} \
-	write(1, "\n", 1); \
-}
-#define DIE(...) { ERROR(__VA_ARGS__); exit(1); }
-#define HELP_AND_DIE(...) { ERROR(__VA_ARGS__); usage(); }
 
 void	hex(uint8_t c) {
 	write(1, &"0123456789abcdef"[c >> 4], 1);
 	write(1, &"0123456789abcdef"[c & 0x0f], 1);
-}
-
-#include "string.h"
-
-void	putstr(const char *s) {
-	write(1, s, slen((const uint8_t *)s));
 }
 
 void	print_escape(const string_t *s) {
@@ -67,3 +41,18 @@ void	print_escape(const string_t *s) {
 		}
 	}
 }
+
+void	usage(void);
+
+#define ERROR(...) { \
+	const char	*args[] = { __VA_ARGS__ }; \
+	PUTSTR("ft_ssl: \x1b[91mError\x1b[0m"); \
+	size_t	count = sizeof(args) / sizeof(*args); \
+	for (size_t i = 0; i < count; ++i) { \
+		PUTSTR(": "); \
+		putstr(args[i]); \
+	} \
+	write(1, "\n", 1); \
+}
+#define DIE(...) { ERROR(__VA_ARGS__); exit(1); }
+#define HELP_AND_DIE(...) { ERROR(__VA_ARGS__); usage(); }

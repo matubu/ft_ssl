@@ -2,7 +2,6 @@
 
 #include <stdint.h>
 #include </usr/include/string.h>
-
 #include "malloc.h"
 
 int	is_print(char c) {
