@@ -14,6 +14,7 @@
 	.length_byte_order = BIG_ENDIAN, \
 })
 #define SHA512_DIGEST_LENGTH (8 * sizeof(uint64_t))
+#define SHA384_DIGEST_LENGTH (6 * sizeof(uint64_t))
 
 static const uint64_t	sha_primes_cube_root64[80] = {
 	0x428a2f98d728ae22, 0x7137449123ef65cd, 0xb5c0fbcfec4d3b2f, 0xe9b5dba58189dbbc, 0x3956c25bf348b538, 
@@ -34,14 +35,7 @@ static const uint64_t	sha_primes_cube_root64[80] = {
 	0x431d67c49c100d4c, 0x4cc5d4becb3e42b6, 0x597f299cfc657e2a, 0x5fcb6fab3ad6faec, 0x6c44198c4a475817
 };
 
-#include "bindump.h"
-
 static void		sha512_chunk(uint64_t *digest, uint64_t *input) {
-	// bindump((string_t){
-	// 	.ptr = (uint8_t *)input,
-	// 	.len = 1024/8
-	// });
-
 	uint64_t	w[80];
 	// Copy the chunk 16 words
 	for (size_t i = 0; i < 16; ++i) {
@@ -89,6 +83,27 @@ static void		sha512_chunk(uint64_t *digest, uint64_t *input) {
 	digest[5] += f;
 	digest[6] += g;
 	digest[7] += h;
+}
+
+string_t	sha384_hash(const string_t *input) {
+	uint64_t	*digest = malloc(SHA512_DIGEST_LENGTH);
+	digest[0] = 0xcbbb9d5dc1059ed8;
+	digest[1] = 0x629a292a367cd507;
+	digest[2] = 0x9159015a3070dd17;
+	digest[3] = 0x152fecd8f70e5939;
+	digest[4] = 0x67332667ffc00b31;
+	digest[5] = 0x8eb44a8768581511;
+	digest[6] = 0xdb0c2e0d64f98fa7;
+	digest[7] = 0x47b5481dbefa4fa4;
+
+	LOOP_OVER_CHUNKS(input, SHA512_CHUNK_OPT, {
+		sha512_chunk(digest, (uint64_t *)GET_CHUNK_BUFFER());
+	});
+
+	for (size_t i = 0; i < 6; ++i) {
+		digest[i] = uint64_endianess(digest[i], BIG_ENDIAN);
+	}
+	return ((string_t){ .ptr = (uint8_t *)digest, .len = SHA384_DIGEST_LENGTH });
 }
 
 string_t	sha512_hash(const string_t *input) {

@@ -77,27 +77,6 @@ static void		sha256_chunk(uint32_t *digest, uint32_t *input) {
 	digest[7] += h;
 }
 
-string_t	sha256_hash(const string_t *input) {
-	uint32_t	*digest = malloc(SHA256_DIGEST_LENGTH);
-	digest[0] = 0x6a09e667;
-	digest[1] = 0xbb67ae85;
-	digest[2] = 0x3c6ef372;
-	digest[3] = 0xa54ff53a;
-	digest[4] = 0x510e527f;
-	digest[5] = 0x9b05688c;
-	digest[6] = 0x1f83d9ab;
-	digest[7] = 0x5be0cd19;
-
-	LOOP_OVER_CHUNKS(input, SHA256_CHUNK_OPT, {
-		sha256_chunk(digest, (uint32_t *)GET_CHUNK_BUFFER());
-	});
-
-	for (size_t i = 0; i < 8; ++i) {
-		digest[i] = uint32_endianess(digest[i], BIG_ENDIAN);
-	}
-	return ((string_t){ .ptr = (uint8_t *)digest, .len = SHA256_DIGEST_LENGTH });
-}
-
 string_t	sha224_hash(const string_t *input) {
 	uint32_t	*digest = malloc(SHA256_DIGEST_LENGTH);
 	digest[0] = 0xc1059ed8;
@@ -117,4 +96,25 @@ string_t	sha224_hash(const string_t *input) {
 		digest[i] = uint32_endianess(digest[i], BIG_ENDIAN);
 	}
 	return ((string_t){ .ptr = (uint8_t *)digest, .len = SHA224_DIGEST_LENGTH });
+}
+
+string_t	sha256_hash(const string_t *input) {
+	uint32_t	*digest = malloc(SHA256_DIGEST_LENGTH);
+	digest[0] = 0x6a09e667;
+	digest[1] = 0xbb67ae85;
+	digest[2] = 0x3c6ef372;
+	digest[3] = 0xa54ff53a;
+	digest[4] = 0x510e527f;
+	digest[5] = 0x9b05688c;
+	digest[6] = 0x1f83d9ab;
+	digest[7] = 0x5be0cd19;
+
+	LOOP_OVER_CHUNKS(input, SHA256_CHUNK_OPT, {
+		sha256_chunk(digest, (uint32_t *)GET_CHUNK_BUFFER());
+	});
+
+	for (size_t i = 0; i < 8; ++i) {
+		digest[i] = uint32_endianess(digest[i], BIG_ENDIAN);
+	}
+	return ((string_t){ .ptr = (uint8_t *)digest, .len = SHA256_DIGEST_LENGTH });
 }
