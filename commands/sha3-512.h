@@ -15,7 +15,7 @@
 })
 #define SHA3_512_DIGEST_LENGTH (8 * sizeof(uint32_t))
 
-void		sha3_512_chunk(uint32_t *digest, uint32_t *input) {
+static void		sha3_512_chunk(uint32_t *digest, uint32_t *input) {
 	(void)digest;
 	(void)input;
 }

@@ -26,7 +26,7 @@ static const uint32_t	sha_primes_cube_root[64] = {
 	0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
 };
 
-void		sha256_chunk(uint32_t *digest, uint32_t *input) {
+static void		sha256_chunk(uint32_t *digest, uint32_t *input) {
 	uint32_t	w[64];
 	// Copy the chunk 16 words
 	for (size_t i = 0; i < 16; ++i) {

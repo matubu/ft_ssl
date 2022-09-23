@@ -1,9 +1,11 @@
 #pragma once
 
 #include "commands/md5.h"
+// #include "commands/sha3-512.h"
 #include "commands/sha256.h"
-#include "commands/shake256.h"
+// #include "commands/shake256.h"
 #include "commands/sm3.h"
+// #include "commands/whirlpool.h"
 
 #include "io.h"
 
@@ -14,11 +16,11 @@ typedef struct {
 
 const command_t	commands[] = {
 	{ .name = "md5", .fn = md5_hash },
-	{ .name = "sha3-512", .fn = sha3_512_hash },   // <<< TODO
+	// { .name = "sha3-512", .fn = sha3_512_hash },   // <<< TODO
 	{ .name = "sha256", .fn = sha256_hash },
-	{ .name = "shake256", .fn = shake256_hash },   // <<< TODO
+	// { .name = "shake256", .fn = shake256_hash },   // <<< TODO
 	{ .name = "sm3", .fn = sm3_hash },             // DONE
-	{ .name = "whirlpool", .fn = whirlpool_hash }, // <<< TODO
+	// { .name = "whirlpool", .fn = whirlpool_hash }, // <<< TODO
 
 	// blake2s256 https://www.rfc-editor.org/rfc/rfc7693
 	// Tiger      ???

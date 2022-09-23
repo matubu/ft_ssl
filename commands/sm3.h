@@ -15,18 +15,18 @@
 })
 #define SM3_DIGEST_LENGTH (8 * sizeof(uint32_t))
 
-uint32_t	sm3_p0(uint32_t x) {
+static uint32_t	sm3_p0(uint32_t x) {
 	return (x ^ leftrotate(x, 9) ^ leftrotate(x, 17));
 }
 
-uint32_t	sm3_p1(uint32_t x) {
+static uint32_t	sm3_p1(uint32_t x) {
 	return (x ^ leftrotate(x, 15) ^ leftrotate(x, 23));
 }
 
 #define SM3_FF(j, a, b, c) (i < 16 ? (a ^ b ^ c) : (a & b) | (a & c) | (b & c))
 #define SM3_GG(j, a, b, c) (i < 16 ? (a ^ b ^ c) : (a & b) | (~a & c))
 
-void		sm3_chunk(uint32_t *digest, uint32_t *input) {
+static void		sm3_chunk(uint32_t *digest, uint32_t *input) {
 	uint32_t	w[68];
 	// Copy the chunk (16 words)
 	for (size_t i = 0; i < 16; ++i) {

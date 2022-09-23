@@ -4,9 +4,6 @@
 #include "hexdump.h"
 #include "commands.h"
 
-// BUG if none of the files could be open, the program read stdin, but should not
-// TODO debug flag to compare with real hash
-
 typedef struct input_list_s {
 	string_t			display_str;
 	string_t			str;         // Needs to be free
@@ -30,7 +27,6 @@ void	usage(void) {
 	PUTS("  -r          reverse the format of the output");
 	PUTS("  -s STRING   print the sum of the given string");
 	PUTS("");
-	// TODO dynamic depending on commands array
 	PUTSTR("Commands: ");
 	for (size_t i = 0; i < commands_count; ++i) {
 		if (i) {
@@ -62,6 +58,7 @@ arguments_t	parse_arguments(const char **av) {
 		.reverse_format = 0,
 		.inputs = NULL
 	};
+	int			read_stdin = 1;
 
 	while (*av && **av == '-') {
 		if ((*av)[1] == '\0' || (*av)[2] != '\0') {
@@ -77,6 +74,7 @@ arguments_t	parse_arguments(const char **av) {
 					HELP_AND_DIE("expected a string after -s");
 				}
 
+				read_stdin = 0;
 				push_input(&args.inputs, string((uint8_t *)*av), stringdup(*av));
 			break ;
 			default:
@@ -89,13 +87,14 @@ arguments_t	parse_arguments(const char **av) {
 	while (*av) {
 		string_t	file;
 
+		read_stdin = 0;
 		if (readfile(*av, &file) == 0) {
 			push_input(&args.inputs, string((uint8_t *)*av), file);
 		}
 		++av;
 	}
 
-	if (args.inputs == NULL) {
+	if (read_stdin) {
 		string_t	stdin_input = readall(0);
 
 		push_input(&args.inputs, args.print_stdin ? stdin_input : string((uint8_t *)"stdin"), stdin_input);

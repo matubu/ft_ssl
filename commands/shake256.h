@@ -16,7 +16,7 @@
 })
 #define SHAKE256_DIGEST_LENGTH (8 * sizeof(uint32_t))
 
-void		shake256_chunk(uint32_t *digest, uint32_t *input) {
+static void		shake256_chunk(uint32_t *digest, uint32_t *input) {
 	(void)digest;
 	(void)input;
 }

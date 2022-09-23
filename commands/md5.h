@@ -34,7 +34,7 @@ static const uint32_t	md5_sin[64] = {
 	0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1, 0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391,
 };
 
-void		md5_chunk(uint32_t *digest, uint32_t *input) {
+static void		md5_chunk(uint32_t *digest, uint32_t *input) {
 	uint32_t	a = digest[0];
 	uint32_t	b = digest[1];
 	uint32_t	c = digest[2];
