@@ -75,7 +75,7 @@ arguments_t	parse_arguments(const char **av) {
 				}
 
 				read_stdin = 0;
-				push_input(&args.inputs, string((uint8_t *)*av), stringdup(*av));
+				push_input(&args.inputs, string_ptr((uint8_t *)*av), string_dup(*av));
 			break ;
 			default:
 				HELP_AND_DIE("invalid flag", *av);
@@ -89,7 +89,7 @@ arguments_t	parse_arguments(const char **av) {
 
 		read_stdin = 0;
 		if (readfile(*av, &file) == 0) {
-			push_input(&args.inputs, string((uint8_t *)*av), file);
+			push_input(&args.inputs, string_ptr((uint8_t *)*av), file);
 		}
 		++av;
 	}
@@ -97,7 +97,7 @@ arguments_t	parse_arguments(const char **av) {
 	if (read_stdin) {
 		string_t	stdin_input = readall(0);
 
-		push_input(&args.inputs, args.print_stdin ? stdin_input : string((uint8_t *)"stdin"), stdin_input);
+		push_input(&args.inputs, args.print_stdin ? stdin_input : string_ptr((uint8_t *)"stdin"), stdin_input);
 	}
 
 	return (args);

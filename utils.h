@@ -5,24 +5,31 @@
 #include "endianess.h"
 #include "string.h"
 
-uint32_t	leftrotate(uint32_t n, uint8_t offset) {
+uint32_t	leftrotate32(uint32_t n, uint8_t offset) {
 	return ((n << offset) | (n >> (32 - offset)));
 }
+uint64_t	leftrotate64(uint64_t n, uint8_t offset) {
+	return ((n << offset) | (n >> (64 - offset)));
+}
 
-uint32_t	rightrotate(uint32_t n, uint8_t offset) {
+uint32_t	rightrotate32(uint32_t n, uint8_t offset) {
 	return ((n >> offset) | (n << (32 - offset)));
+}
+uint64_t	rightrotate64(uint64_t n, uint8_t offset) {
+	return ((n >> offset) | (n << (64 - offset)));
 }
 
 typedef struct {
 	size_t	chunk_byte_count;
-	int		length_byte_order;
-}	padding_opt;
-
-void		init_chunk_buffer(uint8_t *buffer, const string_t *input, size_t i, const padding_opt *opt) {
+	size_t	length_class;      // either 64 or 128 (32 not supported)
+	int		length_byte_order; // either LITTLE or BIG endian
+}	chunk_opt;
+// Note: does not support 128 Little
+void		init_chunk_buffer(uint8_t *buffer, const string_t *input, size_t i, const chunk_opt *opt) {
 	size_t j = 0;
 	
 	while (j < opt->chunk_byte_count && i < input->len) {
-		// need to change depending on endianess
+		// TODO need to change depending on endianess ?
 		buffer[j] = input->ptr[i];
 		++j;
 		++i;
@@ -33,15 +40,31 @@ void		init_chunk_buffer(uint8_t *buffer, const string_t *input, size_t i, const 
 
 	buffer[j++] = 0x80;
 
-	while (j < opt->chunk_byte_count && j != opt->chunk_byte_count - sizeof(uint64_t)) {
+	while (j < opt->chunk_byte_count && j != opt->chunk_byte_count - (opt->length_class / 8)) {
 		buffer[j++] = 0;
 	}
 
 	if (j >= opt->chunk_byte_count)
 		return ;
 
+	while (j != opt->chunk_byte_count - sizeof(uint64_t)) {
+		buffer[j++] = 0;
+	}
+
 	*(uint64_t *)&buffer[j] = uint64_endianess(input->len * 8, opt->length_byte_order);
 }
+
+
+#define LOOP_OVER_CHUNKS(input, opt, callback) { \
+	size_t		byte_count = input->len + 1 + opt->length_class / 8; \
+	uint8_t		buffer[opt->chunk_byte_count]; \
+ \
+	for (size_t i = 0; i < byte_count; i += opt->chunk_byte_count) { \
+		init_chunk_buffer(buffer, input, i, opt); \
+		callback; \
+	} \
+}
+#define GET_CHUNK_BUFFER() buffer
 
 // const uint8_t	AESSBox[] = {
 // 	0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,

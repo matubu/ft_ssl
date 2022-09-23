@@ -5,17 +5,17 @@
 #include "endianess.h"
 #include "utils.h"
 
-// command: openssl sha256
 // nice links:
 // https://en.wikipedia.org/wiki/SHA-2
 
-#define SHA256_PADDING_OPT (&(padding_opt){ \
-	.chunk_byte_count = 64, \
+#define SHA256_CHUNK_OPT (&(chunk_opt){ \
+	.chunk_byte_count = 512 / 8, \
+	.length_class = 64, \
 	.length_byte_order = BIG_ENDIAN, \
 })
 #define SHA256_DIGEST_LENGTH (8 * sizeof(uint32_t))
 
-static const uint32_t	sha_primes_cube_root[64] = {
+static const uint32_t	sha_primes_cube_root32[64] = {
 	0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
 	0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
 	0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
@@ -30,12 +30,12 @@ static void		sha256_chunk(uint32_t *digest, uint32_t *input) {
 	uint32_t	w[64];
 	// Copy the chunk 16 words
 	for (size_t i = 0; i < 16; ++i) {
-		w[i] = swap_uint32(input[i]);
+		w[i] = uint32_endianess(input[i], BIG_ENDIAN);
 	}
-	// Extend the first 16 words into the remaining 48 words w[16..63]
+	// Extend the first 16 words
 	for (size_t i = 16; i < 64; ++i) {
-		uint32_t s0 = rightrotate(w[i-15], 7) ^ rightrotate(w[i-15], 18) ^ (w[i-15] >> 3);
-		uint32_t s1 = rightrotate(w[i-2], 17) ^ rightrotate(w[i-2], 19) ^ (w[i-2] >> 10);
+		uint32_t s0 = rightrotate32(w[i-15], 7) ^ rightrotate32(w[i-15], 18) ^ (w[i-15] >> 3);
+		uint32_t s1 = rightrotate32(w[i-2], 17) ^ rightrotate32(w[i-2], 19) ^ (w[i-2] >> 10);
 		w[i] = w[i-16] + s0 + w[i-7] + s1;
 	}
 
@@ -49,10 +49,10 @@ static void		sha256_chunk(uint32_t *digest, uint32_t *input) {
 	uint32_t	h = digest[7];
 
 	for (size_t i = 0; i < 64; ++i) {
-		uint32_t	S1 = rightrotate(e, 6) ^ rightrotate(e, 11) ^ rightrotate(e, 25);
+		uint32_t	S1 = rightrotate32(e, 6) ^ rightrotate32(e, 11) ^ rightrotate32(e, 25);
 		uint32_t	ch = (e & f) ^ (~e & g);
-		uint32_t	temp1 = h + S1 + ch + sha_primes_cube_root[i] + w[i];
-		uint32_t	S0 = rightrotate(a, 2) ^ rightrotate(a, 13) ^ rightrotate(a, 22);
+		uint32_t	temp1 = h + S1 + ch + sha_primes_cube_root32[i] + w[i];
+		uint32_t	S0 = rightrotate32(a, 2) ^ rightrotate32(a, 13) ^ rightrotate32(a, 22);
 		uint32_t	maj = (a & b) ^ (a & c) ^ (b & c);
 		uint32_t	temp2 = S0 + maj;
 
@@ -87,15 +87,9 @@ string_t	sha256_hash(const string_t *input) {
 	digest[6] = 0x1f83d9ab;
 	digest[7] = 0x5be0cd19;
 
-	// 1 extra byte for the separator and 8 for the 64 bits length
-	size_t		byte_count = input->len + 9;
-
-	uint8_t		buffer[64];
-
-	for (size_t i = 0; i < byte_count; i += 64) {
-		init_chunk_buffer(buffer, input, i, SHA256_PADDING_OPT);
-		sha256_chunk(digest, (uint32_t *)buffer);
-	}
+	LOOP_OVER_CHUNKS(input, SHA256_CHUNK_OPT, {
+		sha256_chunk(digest, (uint32_t *)GET_CHUNK_BUFFER());
+	});
 
 	for (size_t i = 0; i < 8; ++i) {
 		digest[i] = uint32_endianess(digest[i], BIG_ENDIAN);
