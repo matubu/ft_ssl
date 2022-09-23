@@ -14,6 +14,7 @@ typedef struct {
 
 const command_t	commands[] = {
 	{ .name = "md5", .fn = md5_hash },
+	{ .name = "sha224", .fn = sha224_hash },
 	{ .name = "sha256", .fn = sha256_hash },
 	{ .name = "sha512", .fn = sha512_hash },
 	{ .name = "sm3", .fn = sm3_hash },             // DONE

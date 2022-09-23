@@ -37,10 +37,10 @@ static const uint64_t	sha_primes_cube_root64[80] = {
 #include "bindump.h"
 
 static void		sha512_chunk(uint64_t *digest, uint64_t *input) {
-	bindump((string_t){
-		.ptr = (uint8_t *)input,
-		.len = 1024/8
-	});
+	// bindump((string_t){
+	// 	.ptr = (uint8_t *)input,
+	// 	.len = 1024/8
+	// });
 
 	uint64_t	w[80];
 	// Copy the chunk 16 words
@@ -64,10 +64,10 @@ static void		sha512_chunk(uint64_t *digest, uint64_t *input) {
 	uint64_t	h = digest[7];
 
 	for (size_t i = 0; i < 80; ++i) {
-		uint64_t	S1 = rightrotate64(e, 28) ^ rightrotate64(e, 34) ^ rightrotate64(e, 39);
+		uint64_t	S1 = rightrotate64(e, 14) ^ rightrotate64(e, 18) ^ rightrotate64(e, 41);
 		uint64_t	ch = (e & f) ^ (~e & g);
 		uint64_t	temp1 = h + S1 + ch + sha_primes_cube_root64[i] + w[i];
-		uint64_t	S0 = rightrotate64(a, 14) ^ rightrotate64(a, 18) ^ rightrotate64(a, 41);
+		uint64_t	S0 = rightrotate64(a, 28) ^ rightrotate64(a, 34) ^ rightrotate64(a, 39);
 		uint64_t	maj = (a & b) ^ (a & c) ^ (b & c);
 		uint64_t	temp2 = S0 + maj;
 

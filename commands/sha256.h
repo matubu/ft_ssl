@@ -14,6 +14,7 @@
 	.length_byte_order = BIG_ENDIAN, \
 })
 #define SHA256_DIGEST_LENGTH (8 * sizeof(uint32_t))
+#define SHA224_DIGEST_LENGTH (7 * sizeof(uint32_t))
 
 static const uint32_t	sha_primes_cube_root32[64] = {
 	0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
@@ -95,4 +96,25 @@ string_t	sha256_hash(const string_t *input) {
 		digest[i] = uint32_endianess(digest[i], BIG_ENDIAN);
 	}
 	return ((string_t){ .ptr = (uint8_t *)digest, .len = SHA256_DIGEST_LENGTH });
+}
+
+string_t	sha224_hash(const string_t *input) {
+	uint32_t	*digest = malloc(SHA256_DIGEST_LENGTH);
+	digest[0] = 0xc1059ed8;
+	digest[1] = 0x367cd507;
+	digest[2] = 0x3070dd17;
+	digest[3] = 0xf70e5939;
+	digest[4] = 0xffc00b31;
+	digest[5] = 0x68581511;
+	digest[6] = 0x64f98fa7;
+	digest[7] = 0xbefa4fa4;
+
+	LOOP_OVER_CHUNKS(input, SHA256_CHUNK_OPT, {
+		sha256_chunk(digest, (uint32_t *)GET_CHUNK_BUFFER());
+	});
+
+	for (size_t i = 0; i < 7; ++i) {
+		digest[i] = uint32_endianess(digest[i], BIG_ENDIAN);
+	}
+	return ((string_t){ .ptr = (uint8_t *)digest, .len = SHA224_DIGEST_LENGTH });
 }

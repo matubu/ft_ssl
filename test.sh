@@ -1,3 +1,5 @@
+make
+
 echo
 
 echo -e "<<< \x1b[1;96m FTSSL \x1b[0m >>>"
