@@ -5,22 +5,22 @@
 
 // TODO change usage to print flags dynamically
 void	usage(void) {
-	PUTS("usage: ft_ssl command [flags] [file/string]");
-	PUTS("");
-	PUTS("Flags:");
-	PUTS("  -p          echo STDIN to STDOUT and append the checksum to STDOUT");
-	PUTS("  -q          quiet mode");
-	PUTS("  -r          reverse the format of the output");
-	PUTS("  -s STRING   print the sum of the given string");
-	PUTS("");
-	PUTSTR("Commands: ");
+	PUTS(2, "usage: ft_ssl command [flags] [file/string]");
+	PUTS(2, "");
+	PUTS(2, "Flags:");
+	PUTS(2, "  -p          echo STDIN to STDOUT and append the checksum to STDOUT");
+	PUTS(2, "  -q          quiet mode");
+	PUTS(2, "  -r          reverse the format of the output");
+	PUTS(2, "  -s STRING   print the sum of the given string");
+	PUTS(2, "");
+	PUTSTR(2, "Commands: ");
 	for (size_t i = 0; i < commands_count; ++i) {
 		if (i) {
-			PUTSTR(", ");
+			PUTSTR(2, ", ");
 		}
-		putstr(commands[i].name);
+		putstr(2, commands[i].name);
 	}
-	PUTS("");
+	PUTS(2, "");
 	exit(1);
 }
 
@@ -33,6 +33,7 @@ void	push_input(input_t **lst, string_t filename, int origin, string_t str) {
 	*lst = new;
 }
 
+// TODO fix if their is an error the out file will still be open
 arguments_t	parse_arguments(const char **av) {
 	if (av == NULL || *av == NULL) {
 		HELP_AND_DIE("missing command");
@@ -40,7 +41,7 @@ arguments_t	parse_arguments(const char **av) {
 
 	arguments_t args = {
 		.command = get_command(*av++),
-		.inputs = NULL
+		.out_fd = 1
 	};
 	for (size_t i = 0; i < 256; ++i)
 		args.flags[i] = args.command->flags[i];
@@ -59,7 +60,7 @@ arguments_t	parse_arguments(const char **av) {
 		}
 
 		flag->present = 1;
-		if (flag->type == FlagArgument || flag->type == FlagInput) {
+		if (flag->type == FlagArgument || flag->type == FlagInput || flag->type == FlagOutput) {
 			if (*++av == NULL) {
 				HELP_AND_DIE("expected a string after -s");
 			}
@@ -67,6 +68,12 @@ arguments_t	parse_arguments(const char **av) {
 			if (flag->type == FlagInput) {
 				read_stdin = 0;
 				push_input(&args.inputs, (string_t){ .ptr = NULL, .len = 0 }, InputArgument, string_dup(*av));
+			} if (flag->type == FlagOutput) {
+				if (args.out_fd != 1)
+					close(args.out_fd);
+				args.out_fd = open(*av, O_WRONLY | O_TRUNC | O_CREAT, 0644);
+				if (args.out_fd < 0)
+					DIE(*av, "cannot open out file", strerror(errno));
 			} else {
 				flag->argument = *av;
 			}
@@ -112,14 +119,18 @@ int	main(int ac, const char **av) {
 			else
 				fn = args.command->u.twoway.e;
 		}
-		string_t	output = ((string_t (*)(const string_t *))fn)(&ptr->str);
+		string_t	output = ((string_t (*)(const string_t *, const arguments_t *))fn)
+			(&ptr->str, &args);
 
-		((void (*)(const string_t *, const input_t *, const arguments_t *))
-			args.command->print_fn)(&output, ptr, &args);
+		((void (*)(int, const string_t *, const input_t *, const arguments_t *))
+			args.command->print_fn)(args.out_fd, &output, ptr, &args);
 
 		free(ptr->str.ptr);
 		free(ptr);
 		free(output.ptr);
 		ptr = next;
 	}
+
+	if (args.out_fd != 1)
+		close(args.out_fd);
 }

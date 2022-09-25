@@ -40,14 +40,13 @@ typedef struct {
 	{
 		struct
 		{
-			string_t	(*e)(const string_t *);
-			string_t	(*d)(const string_t *);
+			void	*e;
+			void	*d;
 		}	twoway;
 		struct
 		{
-			string_t		(*fn)(const string_t *);
+			void	*fn;
 		}	oneway;
-		// TODO also pass args
 		// Fn(input: string_t, args: arguments_t)
 	} u;
 	void			*print_fn;
@@ -69,39 +68,40 @@ typedef struct {
 	const command_t	*command;
 	flag_t			flags[256];
 	input_t			*inputs;        // Needs to be free
+	int				out_fd;
 }	arguments_t;
 
-void	print_origin(const input_t *curr, const arguments_t *args) {
+void	print_origin(int fd, const input_t *curr, const arguments_t *args) {
 	if (curr->origin == InputStdin && !args->flags['p'].present) {
-		PUTSTR("\x1b[94mStdin\x1b[0m");
+		PUTSTR(fd, "\x1b[94mStdin\x1b[0m");
 	} else if (curr->filename.ptr) {
-		PUTSTR("\x1b[94mFile\x1b[0m<");
-		print_escape(&curr->filename);
-		PUTSTR(">");
+		PUTSTR(fd, "\x1b[94mFile\x1b[0m<");
+		print_escape(fd, &curr->filename);
+		PUTSTR(fd, ">");
 	} else {
-		PUTSTR("\x1b[94m\"\x1b[0m");
-		print_escape(&curr->str);
-		PUTSTR("\x1b[94m\"\x1b[0m");
+		PUTSTR(fd, "\x1b[94m\"\x1b[0m");
+		print_escape(fd, &curr->str);
+		PUTSTR(fd, "\x1b[94m\"\x1b[0m");
 	}
 }
 
-void	hash_print(const string_t *oneway, const input_t *curr, const arguments_t *args) {
+void	hash_print(int fd, const string_t *oneway, const input_t *curr, const arguments_t *args) {
 	if (args->flags['r'].present) {
-		hexdump(oneway);
+		hexdump(fd, oneway);
 		if (!args->flags['q'].present) {
-			PUTSTR(" ");
-			print_origin(curr, args);
+			PUTSTR(fd, " ");
+			print_origin(fd, curr, args);
 		}
 	} else {
 		if (!args->flags['q'].present) {
-			putstr(args->command->name);
-			PUTSTR("(");
-			print_origin(curr, args);
-			PUTSTR(") = ");
+			putstr(fd, args->command->name);
+			PUTSTR(fd, "(");
+			print_origin(fd, curr, args);
+			PUTSTR(fd, ") = ");
 		}
-		hexdump(oneway);
+		hexdump(fd, oneway);
 	}
-	PUTS("");
+	write(fd, "\n", 1);
 }
 
 const flag_t	hash_flags[256] = {

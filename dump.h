@@ -2,33 +2,33 @@
 
 #include "io.h"
 
-void	hexdump(const string_t *s) {
+void	hexdump(int fd, const string_t *s) {
 	for (size_t i = 0; i < s->len; ++i) {
-		hex(s->ptr[i]);
+		hex(fd, s->ptr[i]);
 	}
 }
 
-void	hexdump_with_preview(const string_t *s) {
+void	hexdump_with_preview(int fd, const string_t *s) {
 	for (size_t i = 0; i < s->len; i += 16) {
 		for (size_t j = 0; j < 16; ++j) {
 			if (i + j < s->len)
-				hex(s->ptr[i + j]);
+				hex(fd, s->ptr[i + j]);
 			else
-				write(1, "  ", 2);
+				write(fd, "  ", 2);
 
 			if (j % 2)
-				write(1, " ", 1);
+				write(fd, " ", 1);
 		}
-		write(1, "| ", 2);
+		write(fd, "| ", 2);
 		for (size_t j = 0; j < 16; ++j) {
 			if (i + j >= s->len)
-				write(1, " ", 1);
+				write(fd, " ", 1);
 			else if (is_print(s->ptr[i + j]))
-				write(1, &s->ptr[i + j], 1);
+				write(fd, &s->ptr[i + j], 1);
 			else
-				write(1, ".", 1);
+				write(fd, ".", 1);
 		}
-		write(1, "\n", 1);
+		write(fd, "\n", 1);
 	}
 }
 
@@ -51,13 +51,13 @@ void	bindump(const string_t *s) {
 	write(1, "\n", 1);
 }
 
-void	textdump(const string_t *s) {
+void	textdump(int fd, const string_t *s) {
 	for (size_t i = 0; i < s->len; i += 64) {
 		size_t	len = s->len - i;
 
 		if (len > 64)
 			len = 64;
-		write(1, s->ptr + i, len);
-		write(1, "\n", 1);
+		write(fd, s->ptr + i, len);
+		write(fd, "\n", 1);
 	}
 }
