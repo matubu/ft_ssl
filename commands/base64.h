@@ -5,8 +5,8 @@
 // Documentation:
 // https://www.rfc-editor.org/rfc/rfc4648.html
 
-const char	base64_charset[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-const char	base64_padchar = '=';
+const uint8_t	base64_charset[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const uint8_t	base64_padchar = '=';
 
 string_t	base64_encode(const string_t *input) {
 	uint8_t	*output_ptr = malloc((input->len + 2) / 3 * 4);
@@ -43,6 +43,12 @@ string_t	base64_encode(const string_t *input) {
 }
 
 string_t	base64_decode(const string_t *input) {
+	int16_t	base64_looktable[256] = {-1};
+	base64_looktable[(uint8_t)base64_padchar] = 0;
+	for (size_t i = 0; i < 64; ++i) {
+		base64_looktable[(uint8_t)base64_charset[i]] = i;
+	}
+
 	uint8_t	*output_ptr = malloc(input->len);
 	size_t	j = 0;
 
@@ -52,7 +58,18 @@ string_t	base64_decode(const string_t *input) {
 			continue ;
 		}
 
-		
+		int16_t b0 = base64_looktable[input->ptr[i + 0]];
+		int16_t b1 = base64_looktable[input->ptr[i + 1]];
+		int16_t b2 = base64_looktable[input->ptr[i + 2]];
+		int16_t b3 = base64_looktable[input->ptr[i + 3]];
+
+		if (b0 < 0 || b1 < 0 || b2 < 0 || b3 < 0) {
+			return ((string_t){ .ptr = output_ptr, .len = 0 });
+		}
+
+		// output_ptr[j++] = ;
+		// output_ptr[j++] = ;
+		// output_ptr[j++] = ;
 	}
 
 	return ((string_t){ .ptr = output_ptr, .len = j });

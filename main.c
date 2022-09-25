@@ -3,6 +3,7 @@
 #include "readfile.h"
 #include "ft_ssl.h"
 
+// TODO change usage to print flags dynamically
 void	usage(void) {
 	PUTS("usage: ft_ssl command [flags] [file/string]");
 	PUTS("");
@@ -23,9 +24,10 @@ void	usage(void) {
 	exit(1);
 }
 
-void	push_input(input_t **lst, string_t display_str, string_t str) {
+void	push_input(input_t **lst, string_t filename, int origin, string_t str) {
 	input_t	*new = malloc(sizeof(*new));
-	new->display_str = display_str;
+	new->filename = filename;
+	new->origin = origin;
 	new->str = str;
 	new->next = *lst;
 	*lst = new;
@@ -38,11 +40,11 @@ arguments_t	parse_arguments(const char **av) {
 
 	arguments_t args = {
 		.command = get_command(*av++),
-		.print_stdin = 0,
-		.quiet = 0,
-		.reverse_format = 0,
 		.inputs = NULL
 	};
+	for (size_t i = 0; i < 256; ++i)
+		args.flags[i] = args.command->flags[i];
+
 	int			read_stdin = 1;
 
 	while (*av && **av == '-') {
@@ -50,20 +52,24 @@ arguments_t	parse_arguments(const char **av) {
 			HELP_AND_DIE("invalid flag", *av);
 		}
 
-		switch ((*av)[1]) {
-			case 'p': args.print_stdin  = 1;   break ;
-			case 'q': args.quiet = 1;          break ;
-			case 'r': args.reverse_format = 1; break ;
-			case 's':
-				if (*++av == NULL) {
-					HELP_AND_DIE("expected a string after -s");
-				}
+		flag_t	*flag = &args.flags[(uint8_t)(*av)[1]];
 
+		if (flag->type == FlagNone) {
+			HELP_AND_DIE("invalid flag", *av);
+		}
+
+		flag->present = 1;
+		if (flag->type == FlagArgument || flag->type == FlagInput) {
+			if (*++av == NULL) {
+				HELP_AND_DIE("expected a string after -s");
+			}
+
+			if (flag->type == FlagInput) {
 				read_stdin = 0;
-				push_input(&args.inputs, string_ptr((uint8_t *)*av), string_dup(*av));
-			break ;
-			default:
-				HELP_AND_DIE("invalid flag", *av);
+				push_input(&args.inputs, (string_t){ .ptr = NULL, .len = 0 }, InputArgument, string_dup(*av));
+			} else {
+				flag->argument = *av;
+			}
 		}
 
 		++av;
@@ -74,7 +80,7 @@ arguments_t	parse_arguments(const char **av) {
 
 		read_stdin = 0;
 		if (readfile(*av, &file) == 0) {
-			push_input(&args.inputs, string_ptr((uint8_t *)*av), file);
+			push_input(&args.inputs, string_ptr((uint8_t *)*av), InputFile, file);
 		}
 		++av;
 	}
@@ -82,7 +88,7 @@ arguments_t	parse_arguments(const char **av) {
 	if (read_stdin) {
 		string_t	stdin_input = readall(0);
 
-		push_input(&args.inputs, args.print_stdin ? stdin_input : string_ptr((uint8_t *)"stdin"), stdin_input);
+		push_input(&args.inputs, (string_t){ .ptr = NULL, .len = 0 }, InputStdin, stdin_input);
 	}
 
 	return (args);
