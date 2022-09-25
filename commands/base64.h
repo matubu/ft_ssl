@@ -20,7 +20,7 @@ string_t	base64_encode(const string_t *input) {
 		if (i + 2 < input->len)
 			b2 = input->ptr[i + 2];
 
-		output_ptr[j++] = base64_charset[(b0 >> 2)];
+		output_ptr[j++] = base64_charset[b0 >> 2];
 
 		if (b1 == -1) {
 			output_ptr[j++] = base64_charset[(b0 & 0b11) << 4];
@@ -57,6 +57,9 @@ string_t	base64_decode(const string_t *input) {
 			i++;
 			continue ;
 		}
+		if (i + 4 > input->len) {
+			goto error;
+		}
 
 		int16_t b0 = base64_looktable[input->ptr[i + 0]];
 		int16_t b1 = base64_looktable[input->ptr[i + 1]];
@@ -64,13 +67,17 @@ string_t	base64_decode(const string_t *input) {
 		int16_t b3 = base64_looktable[input->ptr[i + 3]];
 
 		if (b0 < 0 || b1 < 0 || b2 < 0 || b3 < 0) {
-			return ((string_t){ .ptr = output_ptr, .len = 0 });
+			goto error;
 		}
 
-		// output_ptr[j++] = ;
-		// output_ptr[j++] = ;
-		// output_ptr[j++] = ;
+		output_ptr[j++] = (b0 << 2) | ((b1 >> 4) & 0b11);
+		output_ptr[j++] = ((b1 & 15) << 4) | ((b2 >> 2) & 15);
+		output_ptr[j++] = ((b2 & 0b11) << 6) | b3;
+		// TODO remove extra crap character
 	}
 
 	return ((string_t){ .ptr = output_ptr, .len = j });
+
+error:
+	return ((string_t){ .ptr = output_ptr, .len = 0 });
 }
