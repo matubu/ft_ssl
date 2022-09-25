@@ -15,7 +15,8 @@ typedef struct {
 		FlagNone = 0,
 		Flag,
 		FlagArgument,
-		FlagInput
+		FlagInput,
+		FlagOutput
 	}			type;
 
 // private
@@ -31,10 +32,26 @@ typedef struct {
 typedef struct {
 	char			*name;
 	const flag_t	*flags;
-	string_t		(*fn)(const string_t *);
-	// Fn(input, args)
+	enum {
+		OneWayFn,
+		TwoWayFn,
+	}	fn_type;
+	union
+	{
+		struct
+		{
+			string_t	(*e)(const string_t *);
+			string_t	(*d)(const string_t *);
+		}	twoway;
+		struct
+		{
+			string_t		(*fn)(const string_t *);
+		}	oneway;
+		// TODO also pass args
+		// Fn(input: string_t, args: arguments_t)
+	} u;
 	void			*print_fn;
-	// Print(output, currentInput, args)
+	// Print(output: string_t, currentInput: input_t, args: arguments_t)
 }	command_t;
 
 typedef struct input_s {
@@ -68,9 +85,9 @@ void	print_origin(const input_t *curr, const arguments_t *args) {
 	}
 }
 
-void	hash_print(const string_t *hash, const input_t *curr, const arguments_t *args) {
+void	hash_print(const string_t *oneway, const input_t *curr, const arguments_t *args) {
 	if (args->flags['r'].present) {
-		hexdump(hash);
+		hexdump(oneway);
 		if (!args->flags['q'].present) {
 			PUTSTR(" ");
 			print_origin(curr, args);
@@ -82,7 +99,7 @@ void	hash_print(const string_t *hash, const input_t *curr, const arguments_t *ar
 			print_origin(curr, args);
 			PUTSTR(") = ");
 		}
-		hexdump(hash);
+		hexdump(oneway);
 	}
 	PUTS("");
 }
@@ -96,15 +113,15 @@ const flag_t	hash_flags[256] = {
 const flag_t	base64_flags[256] = {
 	['d'] = newFlag(Flag),
 	['e'] = newFlag(Flag),
-	['i'] = newFlag(FlagArgument),
-	['o'] = newFlag(FlagArgument)
+	['i'] = newFlag(FlagInput),
+	['o'] = newFlag(FlagOutput)
 };
 const flag_t	cipher_flags[256] = {
 	['a'] = newFlag(Flag),
 	['d'] = newFlag(Flag),
 	['e'] = newFlag(Flag),
-	['i'] = newFlag(FlagArgument),
-	['o'] = newFlag(FlagArgument),
+	['i'] = newFlag(FlagInput),
+	['o'] = newFlag(FlagOutput),
 	['k'] = newFlag(FlagArgument),
 	['p'] = newFlag(FlagArgument),
 	['s'] = newFlag(FlagArgument),
@@ -112,14 +129,23 @@ const flag_t	cipher_flags[256] = {
 };
 
 const command_t	commands[] = {
-	{ .name = "md5",    .fn = md5_hash,      .flags = hash_flags, .print_fn = hash_print },
-	{ .name = "sha224", .fn = sha224_hash,   .flags = hash_flags, .print_fn = hash_print },
-	{ .name = "sha256", .fn = sha256_hash,   .flags = hash_flags, .print_fn = hash_print },
-	{ .name = "sha384", .fn = sha384_hash,   .flags = hash_flags, .print_fn = hash_print },
-	{ .name = "sha512", .fn = sha512_hash,   .flags = hash_flags, .print_fn = hash_print },
-	{ .name = "sm3",    .fn = sm3_hash,      .flags = hash_flags, .print_fn = hash_print },
+	{ .name = "md5",    .fn_type = OneWayFn, .u.oneway.fn = md5_hash,
+		.flags = hash_flags, .print_fn = hash_print },
+	{ .name = "sha224", .fn_type = OneWayFn, .u.oneway.fn = sha224_hash,
+		.flags = hash_flags, .print_fn = hash_print },
+	{ .name = "sha256", .fn_type = OneWayFn, .u.oneway.fn = sha256_hash,
+		.flags = hash_flags, .print_fn = hash_print },
+	{ .name = "sha384", .fn_type = OneWayFn, .u.oneway.fn = sha384_hash,
+		.flags = hash_flags, .print_fn = hash_print },
+	{ .name = "sha512", .fn_type = OneWayFn, .u.oneway.fn = sha512_hash,
+		.flags = hash_flags, .print_fn = hash_print },
+	{ .name = "sm3",    .fn_type = OneWayFn, .u.oneway.fn = sm3_hash,
+		.flags = hash_flags, .print_fn = hash_print },
 
-	// { .name = "base64", .fn = base64_command, .flags = base64_flags, .print_fn = textdump },
+	{ .name = "base64", .fn_type = TwoWayFn, .u.twoway = {
+		.e = base64_encode,
+		.d = base64_decode
+	}, .flags = base64_flags, .print_fn = textdump },
 	// { .name = "des", .fn = des_command, .flags = cipher_flags, .print_fn = textdump },
 };
 size_t	commands_count = sizeof(commands) / sizeof(commands[0]);

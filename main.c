@@ -103,13 +103,23 @@ int	main(int ac, const char **av) {
 	while (ptr) {
 		input_t	*next = ptr->next;
 
-		string_t	hash = args.command->fn(&ptr->str);
+		void	*fn;
+		if (args.command->fn_type == OneWayFn) {
+			fn = args.command->u.oneway.fn;
+		} else {
+			if (args.flags['d'].present)
+				fn = args.command->u.twoway.d;
+			else
+				fn = args.command->u.twoway.e;
+		}
+		string_t	output = ((string_t (*)(const string_t *))fn)(&ptr->str);
+
 		((void (*)(const string_t *, const input_t *, const arguments_t *))
-			args.command->print_fn)(&hash, ptr, &args);
+			args.command->print_fn)(&output, ptr, &args);
 
 		free(ptr->str.ptr);
 		free(ptr);
-		free(hash.ptr);
+		free(output.ptr);
 		ptr = next;
 	}
 }
