@@ -18,5 +18,4 @@ fi
 
 diff --color=always -s .ft_ssl.txt --label "ft_ssl" .openssl.txt --label "openssl"
 
-rm -rf .ft_ssl.txt
-rm -rf .openssl.txt
+rm -rf .ft_ssl.txt .openssl.txt

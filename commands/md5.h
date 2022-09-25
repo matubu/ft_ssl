@@ -1,11 +1,8 @@
 #pragma once
 
-#include "malloc.h"
-#include "string.h"
-#include "endianess.h"
 #include "utils.h"
 
-// nice links:
+// Documentation:
 // https://fthb321.github.io/MD5-Hash/MD5OurVersion2.html
 // https://en.wikipedia.org/wiki/MD5
 // https://www.herongyang.com/Cryptography/MD5-Message-Digest-Algorithm-Overview.html

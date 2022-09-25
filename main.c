@@ -1,22 +1,7 @@
 #include "malloc.h"
 #include "io.h"
 #include "readfile.h"
-#include "hexdump.h"
-#include "commands.h"
-
-typedef struct input_list_s {
-	string_t			display_str;
-	string_t			str;         // Needs to be free
-	struct input_list_s	*next;
-}	input_list_t;
-
-typedef struct {
-	const command_t	*command;
-	int				print_stdin;
-	int				quiet;
-	int				reverse_format;
-	input_list_t	*inputs;        // Needs to be free
-}	arguments_t;
+#include "ft_ssl.h"
 
 void	usage(void) {
 	PUTS("usage: ft_ssl command [flags] [file/string]");
@@ -38,8 +23,8 @@ void	usage(void) {
 	exit(1);
 }
 
-void	push_input(input_list_t **lst, string_t display_str, string_t str) {
-	input_list_t	*new = malloc(sizeof(*new));
+void	push_input(input_t **lst, string_t display_str, string_t str) {
+	input_t	*new = malloc(sizeof(*new));
 	new->display_str = display_str;
 	new->str = str;
 	new->next = *lst;
@@ -107,29 +92,14 @@ int	main(int ac, const char **av) {
 	(void)ac;
 	arguments_t	args = parse_arguments(av + 1);
 
-	input_list_t	*ptr = args.inputs;
+	input_t	*ptr = args.inputs;
 
 	while (ptr) {
-		input_list_t	*next = ptr->next;
+		input_t	*next = ptr->next;
 
 		string_t	hash = args.command->fn(&ptr->str);
-
-		if (args.reverse_format) {
-			hexdump(hash);
-			if (!args.quiet) {
-				PUTSTR(" ");
-				print_escape(&ptr->display_str);
-			}
-		} else {
-			if (!args.quiet) {
-				putstr(args.command->name);
-				PUTSTR("(");
-				print_escape(&ptr->display_str);
-				PUTSTR(") = ");
-			}
-			hexdump(hash);
-		}
-		PUTS("");
+		((void (*)(const string_t *, const input_t *, const arguments_t *))
+			args.command->print_fn)(&hash, ptr, &args);
 
 		free(ptr->str.ptr);
 		free(ptr);

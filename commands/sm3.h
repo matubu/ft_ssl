@@ -1,11 +1,8 @@
 #pragma once
 
-#include "malloc.h"
-#include "string.h"
-#include "endianess.h"
 #include "utils.h"
 
-// nice links:
+// Documentation:
 // https://www.researchgate.net/figure/Padding-and-parsing-on-different-lengths-of-messages_fig1_335848054
 
 #define SM3_CHUNK_OPT (&(chunk_opt){ \

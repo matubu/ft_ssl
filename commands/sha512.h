@@ -1,11 +1,8 @@
 #pragma once
 
-#include "malloc.h"
-#include "string.h"
-#include "endianess.h"
 #include "utils.h"
 
-// nice links:
+// Documentation:
 // https://en.wikipedia.org/wiki/SHA-2
 
 #define SHA512_CHUNK_OPT (&(chunk_opt){ \
