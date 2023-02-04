@@ -18,6 +18,7 @@ typedef struct {
 		Flag,
 		FlagArgument,
 		FlagInput,
+		FlagInputFile,
 		FlagOutput
 	}			type;
 	char		*description;
@@ -119,21 +120,21 @@ const flag_t	hash_flags[256] = {
 	['s'] = newFlag(FlagInput, "print the sum of the given string"),
 };
 const flag_t	base64_flags[256] = {
-	['d'] = newFlag(Flag,       "decode mode"),
-	['e'] = newFlag(Flag,       "encode mode (default)"),
-	['i'] = newFlag(FlagInput,  "input file"),
-	['o'] = newFlag(FlagOutput, "output file")
+	['d'] = newFlag(Flag,          "decode mode"),
+	['e'] = newFlag(Flag,          "encode mode (default)"),
+	['i'] = newFlag(FlagInputFile, "input file"),
+	['o'] = newFlag(FlagOutput,    "output file")
 };
 const flag_t	cipher_flags[256] = {
-	['a'] = newFlag(Flag,         "decode/encode the input/output in base64, depending on the encrypt mode"),
-	['d'] = newFlag(Flag,         "decrypt mode"),
-	['e'] = newFlag(Flag,         "encrypt mode (default)"),
-	['i'] = newFlag(FlagInput,    "input file for message"),
-	['o'] = newFlag(FlagOutput,   "key in hex is the next argument"),
-	['k'] = newFlag(FlagArgument, "output file for message"),
-	['p'] = newFlag(FlagArgument, "password in ascii is the next argument"),
-	['s'] = newFlag(FlagArgument, "the salt in hex is the next argument"),
-	['v'] = newFlag(FlagArgument, "initialization vector in hex is the next argument")
+	['a'] = newFlag(Flag,          "decode/encode the input/output in base64, depending on the encrypt mode"),
+	['d'] = newFlag(Flag,          "decrypt mode"),
+	['e'] = newFlag(Flag,          "encrypt mode (default)"),
+	['i'] = newFlag(FlagInputFile, "input file for message"),
+	['o'] = newFlag(FlagOutput,    "key in hex is the next argument"),
+	['k'] = newFlag(FlagArgument,  "output file for message"),
+	['p'] = newFlag(FlagArgument,  "password in ascii is the next argument"),
+	['s'] = newFlag(FlagArgument,  "the salt in hex is the next argument"),
+	['v'] = newFlag(FlagArgument,  "initialization vector in hex is the next argument")
 };
 
 const command_t	commands[] = {

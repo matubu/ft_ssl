@@ -27,7 +27,7 @@ void	usage(flag_t *flags) {
 	exit(1);
 }
 
-#define HELP_AND_DIE(flags, ...) { ERROR(__VA_ARGS__); usage(flags); }
+#define HELP_AND_DIE(flags, ...) { ERROR(__VA_ARGS__); PUTS(2, ""); usage(flags); }
 
 void	push_input(input_t **lst, string_t filename, int origin, string_t str) {
 	input_t	*new = malloc(sizeof(*new));
@@ -69,23 +69,32 @@ arguments_t	parse_arguments(const char **av) {
 		}
 
 		flag->present = 1;
-		if (flag->type == FlagArgument || flag->type == FlagInput || flag->type == FlagOutput) {
+		if (flag->type == FlagArgument || flag->type == FlagInput || flag->type == FlagInputFile || flag->type == FlagOutput) {
 			if (*++av == NULL) {
-				HELP_AND_DIE(args.flags, "expected a string after flag", *av);
+				HELP_AND_DIE(args.flags, "expected a string after flag", av[-1]);
 			}
+			
+			flag->argument = *av;
 
 			if (flag->type == FlagInput) {
 				read_stdin = 0;
 				push_input(&args.inputs, (string_t){ .ptr = NULL, .len = 0 }, InputArgument, string_dup(*av));
-			} if (flag->type == FlagOutput) {
+			}
+			if (flag->type == FlagInputFile) {
+				string_t	file;
+
+				read_stdin = 0;
+				if (readfile(*av, &file) == 0) {
+					push_input(&args.inputs, string_ptr((uint8_t *)*av), InputFile, file);
+				}
+			}
+			if (flag->type == FlagOutput) {
 				if (args.out_fd != 1)
 					close(args.out_fd);
 				args.out_fd = open(*av, O_WRONLY | O_TRUNC | O_CREAT, 0644);
 				if (args.out_fd < 0)
 					DIE(NULL, *av, "cannot open out file", strerror(errno));
-			} else {
-				flag->argument = *av;
-			}
+			} 
 		}
 
 		++av;
