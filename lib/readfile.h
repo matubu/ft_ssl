@@ -4,8 +4,8 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
-#include "malloc.h"
-#include "io.h"
+#include "lib/malloc.h"
+#include "lib/io.h"
 
 int	readfile(const char *filename, string_t *string) {
 	int	fd = open(filename, O_RDONLY);

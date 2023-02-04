@@ -1,6 +1,6 @@
 #pragma once
 
-#include "utils.h"
+#include "lib/utils.h"
 
 // Documentation:
 // https://en.wikipedia.org/wiki/SHA-2

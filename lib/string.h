@@ -1,8 +1,8 @@
 #pragma once
 
 #include <stdint.h>
-#include </usr/include/string.h>
-#include "malloc.h"
+#include <string.h>
+#include "lib/malloc.h"
 
 int	is_print(char c) {
 	return (c >= ' ' && c <= '~');

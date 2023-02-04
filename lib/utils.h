@@ -3,8 +3,8 @@
 #include <stdint.h>
 
 #include "endianess.h"
-#include "string.h"
-#include "malloc.h"
+#include "lib/string.h"
+#include "lib/malloc.h"
 
 uint32_t	leftrotate32(uint32_t n, uint8_t offset) {
 	return ((n << offset) | (n >> (32 - offset)));

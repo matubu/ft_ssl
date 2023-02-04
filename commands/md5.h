@@ -1,6 +1,6 @@
 #pragma once
 
-#include "utils.h"
+#include "lib/utils.h"
 
 // Documentation:
 // https://fthb321.github.io/MD5-Hash/MD5OurVersion2.html

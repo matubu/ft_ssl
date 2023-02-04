@@ -1,6 +1,3 @@
-#include "malloc.h"
-#include "io.h"
-#include "readfile.h"
 #include "ft_ssl.h"
 
 // TODO change usage to print flags dynamically

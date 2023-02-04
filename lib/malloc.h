@@ -2,7 +2,7 @@
 
 #include <stdlib.h>
 
-#include "io.h"
+#include "lib/io.h"
 
 #define malloc(n) ({ \
 	void	*ptr = malloc(n); \

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include <endian.h>
+#include <machine/endian.h>
 
 // LITTLE_ENDIAN
 // BIG_ENDIAN

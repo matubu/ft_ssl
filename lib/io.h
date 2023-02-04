@@ -4,7 +4,7 @@
 #include <errno.h>
 #include <stdint.h>
 
-#include "string.h"
+#include "lib/string.h"
 
 #define PUTSTR(fd, s) write(fd, s, sizeof(s) - 1)
 #define PUTS(fd, s) PUTSTR(fd, s "\n")

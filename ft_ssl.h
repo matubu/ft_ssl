@@ -1,14 +1,16 @@
 #pragma once
 
+#include "lib/malloc.h"
+#include "lib/io.h"
+#include "lib/dump.h"
+#include "lib/readfile.h"
+
 #include "commands/md5.h"
 #include "commands/sha256.h"
 #include "commands/sha512.h"
 #include "commands/sm3.h"
 
 #include "commands/base64.h"
-
-#include "io.h"
-#include "dump.h"
 
 typedef struct {
 	enum {
