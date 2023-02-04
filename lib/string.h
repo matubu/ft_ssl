@@ -8,6 +8,10 @@ int	is_print(char c) {
 	return (c >= ' ' && c <= '~');
 }
 
+int is_space(char c) {
+	return (c == ' ' || (c >= '\t' && c <= '\f'));
+}
+
 int	cmp(const char *a, const char *b) {
 	while (*a && *a == *b) {
 		++a;

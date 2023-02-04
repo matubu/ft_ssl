@@ -20,16 +20,23 @@ typedef struct {
 		FlagInput,
 		FlagOutput
 	}			type;
+	char		*description;
 
 // private
 	int			present;
 	const char	*argument;
 }	flag_t;
 
-#define newFlag(_type, ...) ((flag_t){ \
+#define newFlag(_type, _description, ...) ((flag_t){ \
 	.type = _type, \
+	.description = _description, \
 	__VA_ARGS__ \
 })
+
+typedef struct {
+	void	*fn;
+	void	*print_fn;
+}	t_func;
 
 typedef struct {
 	char			*name;
@@ -42,16 +49,15 @@ typedef struct {
 	{
 		struct
 		{
-			void	*e;
-			void	*d;
+			t_func	e;
+			t_func	d;
 		}	twoway;
 		struct
 		{
-			void	*fn;
+			t_func	fn;
 		}	oneway;
 		// Fn(input: string_t, args: arguments_t)
 	} u;
-	void			*print_fn;
 	// Print(output: string_t, currentInput: input_t, args: arguments_t)
 }	command_t;
 
@@ -107,47 +113,47 @@ void	hash_print(int fd, const string_t *oneway, const input_t *curr, const argum
 }
 
 const flag_t	hash_flags[256] = {
-	['p'] = newFlag(Flag),
-	['q'] = newFlag(Flag),
-	['r'] = newFlag(Flag),
-	['s'] = newFlag(FlagInput),
+	['p'] = newFlag(Flag,      "echo STDIN to STDOUT and append the checksum to STDOUT"),
+	['q'] = newFlag(Flag,      "quiet mode"),
+	['r'] = newFlag(Flag,      "reverse the format of the output"),
+	['s'] = newFlag(FlagInput, "print the sum of the given string"),
 };
 const flag_t	base64_flags[256] = {
-	['d'] = newFlag(Flag),
-	['e'] = newFlag(Flag),
-	['i'] = newFlag(FlagInput),
-	['o'] = newFlag(FlagOutput)
+	['d'] = newFlag(Flag,       "decode mode"),
+	['e'] = newFlag(Flag,       "encode mode (default)"),
+	['i'] = newFlag(FlagInput,  "input file"),
+	['o'] = newFlag(FlagOutput, "output file")
 };
 const flag_t	cipher_flags[256] = {
-	['a'] = newFlag(Flag),
-	['d'] = newFlag(Flag),
-	['e'] = newFlag(Flag),
-	['i'] = newFlag(FlagInput),
-	['o'] = newFlag(FlagOutput),
-	['k'] = newFlag(FlagArgument),
-	['p'] = newFlag(FlagArgument),
-	['s'] = newFlag(FlagArgument),
-	['v'] = newFlag(FlagArgument)
+	['a'] = newFlag(Flag,         "decode/encode the input/output in base64, depending on the encrypt mode"),
+	['d'] = newFlag(Flag,         "decrypt mode"),
+	['e'] = newFlag(Flag,         "encrypt mode (default)"),
+	['i'] = newFlag(FlagInput,    "input file for message"),
+	['o'] = newFlag(FlagOutput,   "key in hex is the next argument"),
+	['k'] = newFlag(FlagArgument, "output file for message"),
+	['p'] = newFlag(FlagArgument, "password in ascii is the next argument"),
+	['s'] = newFlag(FlagArgument, "the salt in hex is the next argument"),
+	['v'] = newFlag(FlagArgument, "initialization vector in hex is the next argument")
 };
 
 const command_t	commands[] = {
-	{ .name = "md5",    .fn_type = OneWayFn, .u.oneway.fn = md5_hash,
-		.flags = hash_flags, .print_fn = hash_print },
-	{ .name = "sha224", .fn_type = OneWayFn, .u.oneway.fn = sha224_hash,
-		.flags = hash_flags, .print_fn = hash_print },
-	{ .name = "sha256", .fn_type = OneWayFn, .u.oneway.fn = sha256_hash,
-		.flags = hash_flags, .print_fn = hash_print },
-	{ .name = "sha384", .fn_type = OneWayFn, .u.oneway.fn = sha384_hash,
-		.flags = hash_flags, .print_fn = hash_print },
-	{ .name = "sha512", .fn_type = OneWayFn, .u.oneway.fn = sha512_hash,
-		.flags = hash_flags, .print_fn = hash_print },
-	{ .name = "sm3",    .fn_type = OneWayFn, .u.oneway.fn = sm3_hash,
-		.flags = hash_flags, .print_fn = hash_print },
+	{ .name = "md5",    .fn_type = OneWayFn, .u.oneway.fn = {md5_hash, hash_print},
+		.flags = hash_flags },
+	{ .name = "sha224", .fn_type = OneWayFn, .u.oneway.fn = {sha224_hash, hash_print},
+		.flags = hash_flags },
+	{ .name = "sha256", .fn_type = OneWayFn, .u.oneway.fn = {sha256_hash, hash_print},
+		.flags = hash_flags },
+	{ .name = "sha384", .fn_type = OneWayFn, .u.oneway.fn = {sha384_hash, hash_print},
+		.flags = hash_flags },
+	{ .name = "sha512", .fn_type = OneWayFn, .u.oneway.fn = {sha512_hash, hash_print},
+		.flags = hash_flags },
+	{ .name = "sm3",    .fn_type = OneWayFn, .u.oneway.fn = {sm3_hash, hash_print},
+		.flags = hash_flags },
 
 	{ .name = "base64", .fn_type = TwoWayFn, .u.twoway = {
-		.e = base64_encode,
-		.d = base64_decode
-	}, .flags = base64_flags, .print_fn = textdump },
+		.e = {base64_encode, textdump},
+		.d = {base64_decode, stringdump}
+	}, .flags = base64_flags },
 	// { .name = "des", .fn = des_command, .flags = cipher_flags, .print_fn = textdump },
 };
 size_t	commands_count = sizeof(commands) / sizeof(commands[0]);
@@ -158,6 +164,5 @@ const command_t	*get_command(const char *command) {
 			return (&commands[i]);
 		}
 	}
-	HELP_AND_DIE("no such command");
 	return (NULL);
 }

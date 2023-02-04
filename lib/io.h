@@ -42,8 +42,6 @@ void	print_escape(int fd, const string_t *s) {
 	}
 }
 
-void	usage(void);
-
 #define ERROR(...) { \
 	const char	*args[] = { __VA_ARGS__ }; \
 	PUTSTR(2, "ft_ssl: \x1b[91mError\x1b[0m"); \
@@ -55,4 +53,3 @@ void	usage(void);
 	write(2, "\n", 1); \
 }
 #define DIE(...) { ERROR(__VA_ARGS__); exit(1); }
-#define HELP_AND_DIE(...) { ERROR(__VA_ARGS__); usage(); }

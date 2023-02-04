@@ -61,3 +61,7 @@ void	textdump(int fd, const string_t *s) {
 		write(fd, "\n", 1);
 	}
 }
+
+void	stringdump(int fd, const string_t *s) {
+	write(fd, s->ptr, s->len);
+}

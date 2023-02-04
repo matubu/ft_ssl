@@ -43,7 +43,10 @@ string_t	base64_encode(const string_t *input) {
 }
 
 string_t	base64_decode(const string_t *input) {
-	int16_t	base64_looktable[256] = {-1};
+	int16_t	base64_looktable[256];
+	for (size_t i = 0; i < 256; ++i) {
+		base64_looktable[i] = -1;
+	}
 	base64_looktable[(uint8_t)base64_padchar] = 0;
 	for (size_t i = 0; i < 64; ++i) {
 		base64_looktable[(uint8_t)base64_charset[i]] = i;
@@ -51,24 +54,32 @@ string_t	base64_decode(const string_t *input) {
 
 	uint8_t	*output_ptr = malloc(input->len);
 	size_t	j = 0;
+	size_t	i = 0;
 
-	for (size_t i = 0; i < input->len; i += 4) {
-		if (input->ptr[i] == '\n') {
+	while (1) {
+		while (i < input->len && base64_looktable[input->ptr[i]] == -1)
 			i++;
-			continue ;
-		}
-		if (i + 4 > input->len) {
-			goto error;
-		}
+		if (i >= input->len)
+			break ;
+		int16_t b0 = base64_looktable[input->ptr[i++]];
 
-		int16_t b0 = base64_looktable[input->ptr[i + 0]];
-		int16_t b1 = base64_looktable[input->ptr[i + 1]];
-		int16_t b2 = base64_looktable[input->ptr[i + 2]];
-		int16_t b3 = base64_looktable[input->ptr[i + 3]];
-
-		if (b0 < 0 || b1 < 0 || b2 < 0 || b3 < 0) {
+		while (i < input->len && base64_looktable[input->ptr[i]] == -1)
+			i++;
+		if (i >= input->len)
 			goto error;
-		}
+		int16_t b1 = base64_looktable[input->ptr[i++]];
+
+		while (i < input->len && base64_looktable[input->ptr[i]] == -1)
+			i++;
+		if (i >= input->len)
+			goto error;
+		int16_t b2 = base64_looktable[input->ptr[i++]];
+
+		while (i < input->len && base64_looktable[input->ptr[i]] == -1)
+			i++;
+		if (i >= input->len)
+			goto error;
+		int16_t b3 = base64_looktable[input->ptr[i++]];
 
 		output_ptr[j++] = (b0 << 2) | ((b1 >> 4) & 0b11);
 		output_ptr[j++] = ((b1 & 15) << 4) | ((b2 >> 2) & 15);

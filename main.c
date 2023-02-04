@@ -1,15 +1,21 @@
 #include "ft_ssl.h"
 
-// TODO change usage to print flags dynamically
-void	usage(void) {
+void	usage(flag_t *flags) {
 	PUTS(2, "usage: ft_ssl command [flags] [file/string]");
 	PUTS(2, "");
-	PUTS(2, "Flags:");
-	PUTS(2, "  -p          echo STDIN to STDOUT and append the checksum to STDOUT");
-	PUTS(2, "  -q          quiet mode");
-	PUTS(2, "  -r          reverse the format of the output");
-	PUTS(2, "  -s STRING   print the sum of the given string");
-	PUTS(2, "");
+	if (flags) {
+		PUTS(2, "Flags:");
+		for (size_t i = 0; i < 256; ++i) {
+			if (flags[i].type != FlagNone) {
+				PUTSTR(2, "  -");
+				write(2, &i, 1);
+				PUTSTR(2, "  ");
+				putstr(2, flags[i].description);
+				PUTS(2, "");
+			}
+		}
+		PUTS(2, "");
+	}
 	PUTSTR(2, "Commands: ");
 	for (size_t i = 0; i < commands_count; ++i) {
 		if (i) {
@@ -20,6 +26,8 @@ void	usage(void) {
 	PUTS(2, "");
 	exit(1);
 }
+
+#define HELP_AND_DIE(flags, ...) { ERROR(__VA_ARGS__); usage(flags); }
 
 void	push_input(input_t **lst, string_t filename, int origin, string_t str) {
 	input_t	*new = malloc(sizeof(*new));
@@ -33,33 +41,37 @@ void	push_input(input_t **lst, string_t filename, int origin, string_t str) {
 // TODO fix if their is an error the out file will still be open
 arguments_t	parse_arguments(const char **av) {
 	if (av == NULL || *av == NULL) {
-		HELP_AND_DIE("missing command");
+		HELP_AND_DIE(NULL, "missing command");
 	}
 
 	arguments_t args = {
 		.command = get_command(*av++),
 		.out_fd = 1
 	};
-	for (size_t i = 0; i < 256; ++i)
+	if (args.command == NULL) {
+		HELP_AND_DIE(NULL, "no such command");
+	}
+	for (size_t i = 0; i < 256; ++i) {
 		args.flags[i] = args.command->flags[i];
+	}
 
 	int			read_stdin = 1;
 
 	while (*av && **av == '-') {
 		if ((*av)[1] == '\0' || (*av)[2] != '\0') {
-			HELP_AND_DIE("invalid flag", *av);
+			HELP_AND_DIE(args.flags, "invalid flag", *av);
 		}
 
 		flag_t	*flag = &args.flags[(uint8_t)(*av)[1]];
 
 		if (flag->type == FlagNone) {
-			HELP_AND_DIE("invalid flag", *av);
+			HELP_AND_DIE(args.flags, "invalid flag", *av);
 		}
 
 		flag->present = 1;
 		if (flag->type == FlagArgument || flag->type == FlagInput || flag->type == FlagOutput) {
 			if (*++av == NULL) {
-				HELP_AND_DIE("expected a string after -s");
+				HELP_AND_DIE(args.flags, "expected a string after flag", *av);
 			}
 
 			if (flag->type == FlagInput) {
@@ -70,7 +82,7 @@ arguments_t	parse_arguments(const char **av) {
 					close(args.out_fd);
 				args.out_fd = open(*av, O_WRONLY | O_TRUNC | O_CREAT, 0644);
 				if (args.out_fd < 0)
-					DIE(*av, "cannot open out file", strerror(errno));
+					DIE(NULL, *av, "cannot open out file", strerror(errno));
 			} else {
 				flag->argument = *av;
 			}
@@ -107,20 +119,20 @@ int	main(int ac, const char **av) {
 	while (ptr) {
 		input_t	*next = ptr->next;
 
-		void	*fn;
+		const t_func	*fn;
 		if (args.command->fn_type == OneWayFn) {
-			fn = args.command->u.oneway.fn;
+			fn = &args.command->u.oneway.fn;
 		} else {
 			if (args.flags['d'].present)
-				fn = args.command->u.twoway.d;
+				fn = &args.command->u.twoway.d;
 			else
-				fn = args.command->u.twoway.e;
+				fn = &args.command->u.twoway.e;
 		}
-		string_t	output = ((string_t (*)(const string_t *, const arguments_t *))fn)
+		string_t	output = ((string_t (*)(const string_t *, const arguments_t *))fn->fn)
 			(&ptr->str, &args);
 
 		((void (*)(int, const string_t *, const input_t *, const arguments_t *))
-			args.command->print_fn)(args.out_fd, &output, ptr, &args);
+			fn->print_fn)(args.out_fd, &output, ptr, &args);
 
 		free(ptr->str.ptr);
 		free(ptr);
