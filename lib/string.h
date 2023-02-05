@@ -36,11 +36,24 @@ typedef struct {
 	size_t	len;
 }	string_t;
 
-string_t	string_ptr(uint8_t *s) {
+string_t	string_new(size_t len) {
+	return ((string_t){ .ptr = malloc(len), .len = len });
+}
+
+string_t	string_dup(string_t s) {
+	uint8_t	*ptr = malloc(s.len);
+
+	for (size_t i = 0; i < s.len; ++i) {
+		ptr[i] = s.ptr[i];
+	}
+	return ((string_t){ .ptr = ptr, .len = s.len });
+}
+
+string_t	string_from_ptr(uint8_t *s) {
 	return ((string_t){ .ptr = s, .len = slen(s) });
 }
 
-string_t	string_dup(const char *s) {
+string_t	string_from_chars(const char *s) {
 	uint64_t	len = slen((uint8_t *)s);
 	uint8_t		*ptr = malloc(len + 1);
 	uint64_t	i = 0;

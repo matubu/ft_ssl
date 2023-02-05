@@ -99,3 +99,17 @@ string_t	base64_decode(const string_t *input) {
 error:
 	return ((string_t){ .ptr = output_ptr, .len = 0 });
 }
+
+
+
+void	base64_decode_inplace(string_t *s) {
+	string_t decoded = base64_decode(s);
+	free(s->ptr);
+	*(string_t *)s = decoded;
+}
+
+void	base64_encode_inplace(string_t *s) {
+	string_t encoded = base64_encode(s);
+	free(s->ptr);
+	*(string_t *)s = encoded;
+}

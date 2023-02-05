@@ -183,6 +183,7 @@ uint64_t	*key_schedule(uint64_t key, int reverse) {
 }
 
 #define FOR_DES_BLOCK(input) for (size_t i = 0; i < input->len; i += 8)
+#define GET_DES_BLOCK_INDEX() (i / 8)
 #define GET_DES_BLOCK(input) ({ \
 		char block[8]; \
 		for (size_t j = 0; j < 8; ++j) { \
@@ -194,15 +195,88 @@ uint64_t	*key_schedule(uint64_t key, int reverse) {
 		*(uint64_t *)block; \
 })
 
+uint64_t	parse_hex_digit(char c) {
+	if (c >= '0' && c <= '9')
+		return (c - '0');
+	if (c >= 'a' && c <= 'f')
+		return (c - 'a' + 10);
+	if (c >= 'A' && c <= 'F')
+		return (c - 'A' + 10);
+	return 0;
+}
+
+uint64_t	parse_hex(const char *s) {
+	uint64_t	n = 0;
+
+	for (int i = 0; i < 16; ++i) {
+		n <<= 4;
+		if (*s)
+			n |= parse_hex_digit(*s++);
+	}
+	return n;
+}
+
+const char	*des_get_password(const arguments_t *args) {
+	if (args->flags['p'].argument)
+		return args->flags['p'].argument;
+
+	char *pass = getpass("Enter password: ");
+
+	if (pass == NULL)
+		DIE("getpass() failed");
+
+	return pass;
+}
+
+uint64_t	des_get_salt(const arguments_t *args) {
+	if (args->flags['s'].present)
+		return parse_hex(args->flags['s'].argument);
+
+	srand(time(NULL) ^ clock());
+
+	uint64_t salt = 0;
+
+	for (size_t i = 0; i < 64; ++i)
+		salt ^= ((uint64_t)rand()) << i;
+
+	return salt;
+}
+
+uint64_t	des_get_key(const arguments_t *args) {
+	if (args->flags['k'].present) {
+		return parse_hex(args->flags['k'].argument);
+	}
+
+	const char *pass = des_get_password(args);
+	uint64_t salt = des_get_salt(args);
+
+	printf("pass: %s\n", pass);
+	printf("salt: %016llx\n", salt);
+
+	return 1;
+}
+
 string_t	des_cbc_cipher(const string_t *input, const arguments_t *args) {
-	uint64_t *subkeys = key_schedule(1, args->flags['d'].present);
+	if (args->flags['a'].present && args->flags['d'].present)
+		base64_decode_inplace((string_t *)input);
+
+	uint64_t key = des_get_key(args);
+	uint64_t *subkeys = key_schedule(key, args->flags['d'].present);
+
+	printf("key: %016llx\n", key);
+	string_t	output = string_new((input->len + 7) / 8 * 8);
 
 	FOR_DES_BLOCK(input) {
 		uint64_t block = des_feistel(GET_DES_BLOCK(input), subkeys);
+		((uint64_t *)output.ptr)[GET_DES_BLOCK_INDEX()] = block;
+
 		printf("out -> %016llx\n", block);
 	}
 
-	return (string_t){ .ptr = NULL, .len = 0 };
+	if (args->flags['a'].present && !args->flags['d'].present)
+		base64_encode_inplace(&output);
+
+	return output;
 }
 
 string_t	des_ecb_cipher(const string_t *input, const arguments_t *args) {

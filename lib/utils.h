@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <time.h>
 
 #include "endianess.h"
 #include "lib/string.h"
