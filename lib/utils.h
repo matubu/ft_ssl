@@ -7,6 +7,9 @@
 #include "lib/string.h"
 #include "lib/malloc.h"
 
+uint64_t	leftrotate(uint64_t n, uint8_t offset, size_t length) {
+	return ((n << offset) | (n >> (length - offset))) & ((1 << length) - 1);
+}
 uint32_t	leftrotate32(uint32_t n, uint8_t offset) {
 	return ((n << offset) | (n >> (32 - offset)));
 }
@@ -14,6 +17,9 @@ uint64_t	leftrotate64(uint64_t n, uint8_t offset) {
 	return ((n << offset) | (n >> (64 - offset)));
 }
 
+uint64_t	rightrotate(uint64_t n, uint8_t offset, size_t length) {
+	return ((n >> offset) | (n << (length - offset))) & ((1 << length) - 1);
+}
 uint32_t	rightrotate32(uint32_t n, uint8_t offset) {
 	return ((n >> offset) | (n << (32 - offset)));
 }

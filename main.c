@@ -1,4 +1,5 @@
 #include "ft_ssl.h"
+#include "commands.h"
 
 void	usage(flag_t *flags) {
 	PUTS(2, "usage: ft_ssl command [flags] [file/string]");

@@ -62,6 +62,6 @@ void	textdump(int fd, const string_t *s) {
 	}
 }
 
-void	stringdump(int fd, const string_t *s) {
+void	rawtextdump(int fd, const string_t *s) {
 	write(fd, s->ptr, s->len);
 }

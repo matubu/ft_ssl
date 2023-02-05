@@ -57,6 +57,8 @@ string_t	base64_decode(const string_t *input) {
 	size_t	i = 0;
 
 	while (1) {
+		int block_size = 3;
+
 		while (i < input->len && base64_looktable[input->ptr[i]] == -1)
 			i++;
 		if (i >= input->len)
@@ -73,18 +75,23 @@ string_t	base64_decode(const string_t *input) {
 			i++;
 		if (i >= input->len)
 			goto error;
+		if (input->ptr[i] == base64_padchar)
+			block_size--;
 		int16_t b2 = base64_looktable[input->ptr[i++]];
 
 		while (i < input->len && base64_looktable[input->ptr[i]] == -1)
 			i++;
 		if (i >= input->len)
 			goto error;
+		if (input->ptr[i] == base64_padchar)
+			block_size--;
 		int16_t b3 = base64_looktable[input->ptr[i++]];
 
-		output_ptr[j++] = (b0 << 2) | ((b1 >> 4) & 0b11);
-		output_ptr[j++] = ((b1 & 15) << 4) | ((b2 >> 2) & 15);
-		output_ptr[j++] = ((b2 & 0b11) << 6) | b3;
-		// TODO remove extra crap character
+		output_ptr[j + 0] = (b0 << 2) | ((b1 >> 4) & 0b11);
+		output_ptr[j + 1] = ((b1 & 15) << 4) | ((b2 >> 2) & 15);
+		output_ptr[j + 2] = ((b2 & 0b11) << 6) | b3;
+
+		j += block_size;
 	}
 
 	return ((string_t){ .ptr = output_ptr, .len = j });
