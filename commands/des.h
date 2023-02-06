@@ -1,6 +1,8 @@
 #pragma once
 
 #include "lib/utils.h"
+#include "lib/pbkdf2.h"
+
 #include "ft_ssl.h"
 
 // Documentation:
@@ -253,12 +255,14 @@ uint64_t	des_get_key(const arguments_t *args) {
 	printf("pass: %s\n", pass);
 	printf("salt: %016llx\n", salt);
 
+	pbkdf2(pass, (char *)&salt, 1000, 8);
+
 	return 1;
 }
 
 string_t	des_cbc_cipher(const string_t *input, const arguments_t *args) {
 	if (args->flags['a'].present && args->flags['d'].present)
-		base64_decode_inplace((string_t *)input);
+		string_apply_inplace((string_t *)input, base64_decode);
 
 	uint64_t key = des_get_key(args);
 	uint64_t *subkeys = key_schedule(key, args->flags['d'].present);
@@ -274,7 +278,7 @@ string_t	des_cbc_cipher(const string_t *input, const arguments_t *args) {
 	}
 
 	if (args->flags['a'].present && !args->flags['d'].present)
-		base64_encode_inplace(&output);
+		string_apply_inplace(&output, base64_encode);
 
 	return output;
 }

@@ -40,6 +40,15 @@ string_t	string_new(size_t len) {
 	return ((string_t){ .ptr = malloc(len), .len = len });
 }
 
+string_t	string_new_initialized(size_t len, uint8_t c) {
+	string_t	s = string_new(len);
+
+	for (size_t i = 0; i < len; ++i) {
+		s.ptr[i] = c;
+	}
+	return (s);
+}
+
 string_t	string_dup(string_t s) {
 	uint8_t	*ptr = malloc(s.len);
 
@@ -63,4 +72,10 @@ string_t	string_from_chars(const char *s) {
 	}
 	ptr[i] = 0;
 	return ((string_t){ .ptr = ptr, .len = len });
+}
+
+void	string_apply_inplace(string_t *s, string_t (*fun)(const string_t *input)) {
+	string_t decoded = fun(s);
+	free(s->ptr);
+	*(string_t *)s = decoded;
 }
