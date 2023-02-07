@@ -79,3 +79,24 @@ void	string_apply_inplace(string_t *s, string_t (*fun)(const string_t *input)) {
 	free(s->ptr);
 	*(string_t *)s = decoded;
 }
+
+#define JOIN_FREE_NONE	0b00
+#define JOIN_FREE_A	    0b01
+#define JOIN_FREE_B	    0b10
+#define JOIN_FREE_BOTH	0b11
+
+string_t	string_join(string_t a, string_t b, int free_mask) {
+	string_t new = string_new(a.len + b.len);
+
+	for (size_t i = 0; i < a.len; ++i)
+		new.ptr[i] = a.ptr[i];
+	for (size_t i = 0; i < b.len; ++i)
+		new.ptr[a.len + i] = b.ptr[i];
+
+	if (free_mask & JOIN_FREE_A)
+		free(a.ptr);
+	if (free_mask & JOIN_FREE_B)
+		free(b.ptr);
+
+	return (new);
+}

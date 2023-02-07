@@ -39,7 +39,6 @@ void	push_input(input_t **lst, string_t filename, int origin, string_t str) {
 	*lst = new;
 }
 
-// TODO fix if their is an error the out file will still be open
 arguments_t	parse_arguments(const char **av) {
 	if (av == NULL || *av == NULL) {
 		HELP_AND_DIE(NULL, "missing command");

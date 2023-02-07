@@ -38,7 +38,6 @@ void		init_chunk_buffer(uint8_t *buffer, const string_t *input, size_t i, const 
 	size_t j = 0;
 	
 	while (j < opt->chunk_byte_count && i < input->len) {
-		// TODO need to change depending on endianess ?
 		buffer[j] = input->ptr[i];
 		++j;
 		++i;

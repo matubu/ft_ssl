@@ -249,15 +249,13 @@ uint64_t	des_get_key(const arguments_t *args) {
 		return parse_hex(args->flags['k'].argument);
 	}
 
-	const char *pass = des_get_password(args);
+	string_t pass = string_from_chars(des_get_password(args));
 	uint64_t salt = des_get_salt(args);
 
-	printf("pass: %s\n", pass);
-	printf("salt: %016llx\n", salt);
-
-	pbkdf2(pass, (char *)&salt, 1000, 8);
-
-	return 1;
+	string_t hash = pbkdf2(pass, (string_t){ .len = sizeof(salt), .ptr = (uint8_t *)&salt }, 1000, 8);
+	uint64_t key = *(uint64_t *)hash.ptr;
+	free(hash.ptr);
+	return key;
 }
 
 string_t	des_cbc_cipher(const string_t *input, const arguments_t *args) {
