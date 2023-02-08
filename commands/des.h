@@ -297,7 +297,8 @@ string_t	des_cbc_cipher(const string_t *input, const arguments_t *args) {
 
 	FOR_DES_BLOCK(input) {
 		uint64_t block = des_feistel(GET_DES_BLOCK(input), subkeys);
-		((uint64_t *)output.ptr)[GET_DES_BLOCK_INDEX()] = block;
+
+		((uint64_t *)output.ptr)[GET_DES_BLOCK_INDEX()] = uint64_endianess(block, BIG_ENDIAN);
 
 		printf("out -> %016llx\n", block);
 	}
