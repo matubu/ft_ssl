@@ -3,6 +3,8 @@
 #include "lib/utils.h"
 #include "lib/pbkdf2.h"
 
+#include "commands/base64.h"
+
 #include "ft_ssl.h"
 
 // Documentation:
@@ -85,18 +87,21 @@ const uint8_t	des_pc_1[] = {
 };
 
 const uint8_t	des_pc_2[] = {
-	14,	17,	11, 24, 1 ,	5,
-	3 , 28,	15, 6 ,	1 ,	10,
-	23,	19,	12, 4 ,	6 ,	8,
-	16,	7 , 27, 20, 13, 2,
-	41,	52,	31, 37, 47, 55,
-	30,	40,	51, 45, 33, 48,
-	44,	49,	39, 56, 34, 53,
-	46,	42,	50, 36, 29, 32 
+	14, 17, 11, 24, 1,  5, 3,  28, 15, 6,  21, 10,
+	23, 19, 12, 4, 26, 8, 16, 7,  27, 20, 13, 2,
+	41, 52, 31, 37, 47, 55, 30, 40, 51, 45, 33, 48,
+	44, 49, 39, 56, 34, 53, 46, 42, 50, 36, 29, 32
 };
 
 const uint8_t	des_rotation_table[] = {
 	1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1
+};
+
+const uint8_t des_exp[48] = {
+	32, 1, 2, 3, 4, 5, 4, 5, 6, 7, 8, 9,
+	8, 9, 10, 11, 12, 13, 12, 13, 14, 15, 16, 17,
+	16, 17, 18, 19, 20, 21, 20, 21, 22, 23, 24, 25,
+	24, 25, 26, 27, 28, 29, 28, 29, 30, 31, 32, 1
 };
 
 static inline uint64_t	permute(uint64_t n, const uint8_t *pbox, size_t in_size, size_t out_size) {
@@ -111,14 +116,14 @@ static inline uint64_t	permute(uint64_t n, const uint8_t *pbox, size_t in_size, 
 
 uint32_t	des_feistel_f_function(uint32_t block, uint64_t subkey) {
 	// Step 1: Expansion permutation
-	uint64_t	expanded_block = ((uint64_t)(block >> 31) & 1) | (((uint64_t)block & 1) << 47);
-	for (size_t i = 0; i < 8; ++i) {
-		expanded_block |= 0
-			| ((((uint64_t)block << 1 >> (i * 4)) & 0b111111)) << (i * 6);
-	}
+	uint64_t	expanded_block = permute(block, des_exp, 32, 48);
+
+	printf("expanded_block: %016llx\n", expanded_block);
 
 	// Step 2: Key mixing
 	uint64_t	mixed_block = expanded_block ^ subkey;
+
+	printf("mixed_block: %016llx\n", mixed_block);
 
 	// Step 3: S-box substitution
 	uint32_t	substituted_block = 0;
@@ -134,6 +139,8 @@ uint32_t	des_feistel_f_function(uint32_t block, uint64_t subkey) {
 			|= des_sbox[i][idx] << ((7-i) * 4);
 	}
 
+	printf("substituted_block: %08x\n", substituted_block);
+
 	// Step 4: Permutation
 	uint32_t	permutated_block = permute(substituted_block, des_p_pbox, 32, 32);
 
@@ -141,26 +148,43 @@ uint32_t	des_feistel_f_function(uint32_t block, uint64_t subkey) {
 }
 
 uint64_t	des_feistel(uint64_t block, uint64_t *subkeys) {
+
 	block = permute(block, des_ip_pbox, 64, 64);
+	printf("blockin: %llx\n", block);
+	for (size_t i = 0; i < 16; ++i) {
+		printf("subkey %zu: %llx\n", i, subkeys[i]);
+	}
 
 	for (size_t i = 0; i < 16; ++i) {
 		uint32_t	left = block >> 32;
 		uint32_t	right = block & 0xFFFFFFFF;
 
+		printf("left: %x\n", left);
+		printf("right: %x\n", right);
+
 		uint32_t	f = des_feistel_f_function(right, subkeys[i]);
+		printf("f[%zu]: %x\n", i, f);
 
 		block = ((uint64_t)right << 32) | (left ^ f);
 	}
 
 	block = ((block & 0xFFFFFFFF) << 32) | (block >> 32);
 
+	printf("blockout: %llx\n", block);
+
 	block = permute(block, des_inverse_ip_pbox, 64, 64);
+
+	printf("blockout perm: %llx\n", block);
 
 	return block;
 }
 
 uint64_t	*key_schedule(uint64_t key, int reverse) {
 	static uint64_t	subkeys[16];
+
+	key = permute(key, des_pc_1, 64, 56);
+
+	printf("key perm: %llx\n", key);
 
 	uint64_t	left = (key >> 28) & 0xFFFFFFF;
 	uint64_t	right = key & 0xFFFFFFF;
@@ -170,7 +194,9 @@ uint64_t	*key_schedule(uint64_t key, int reverse) {
 		left = leftrotate(left, des_rotation_table[i], 28);
 
 		uint64_t concat = (left << 28) | right;
+		printf("concat[%zu]: %llx\n", i, concat);
 		subkeys[i] = permute(concat, des_pc_2, 56, 48);
+		printf(" -> %llx\n", subkeys[i]);
 	}
 
 	if (reverse) {
@@ -215,7 +241,7 @@ uint64_t	parse_hex(const char *s) {
 		if (*s)
 			n |= parse_hex_digit(*s++);
 	}
-	return uint64_endianess(n, BIG_ENDIAN);
+	return n;
 }
 
 const char	*des_get_password(const arguments_t *args) {
@@ -232,7 +258,7 @@ const char	*des_get_password(const arguments_t *args) {
 
 uint64_t	des_get_salt(const arguments_t *args) {
 	if (args->flags['s'].present)
-		return parse_hex(args->flags['s'].argument);
+		return uint64_endianess(parse_hex(args->flags['s'].argument), BIG_ENDIAN);
 
 	srand(time(NULL) ^ clock());
 
@@ -253,7 +279,7 @@ uint64_t	des_get_key(const arguments_t *args) {
 	uint64_t salt = des_get_salt(args);
 
 	string_t hash = pbkdf2(pass, (string_t){ .len = sizeof(salt), .ptr = (uint8_t *)&salt }, 10000, 8);
-	uint64_t key = *(uint64_t *)hash.ptr;
+	uint64_t key = uint64_endianess(*(uint64_t *)hash.ptr, BIG_ENDIAN);
 	free(hash.ptr);
 
 	return key;
