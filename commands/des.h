@@ -233,7 +233,19 @@ const char	*des_get_password(const arguments_t *args) {
 	return pass;
 }
 
-uint64_t	des_get_salt(const arguments_t *args) {
+uint64_t	des_get_salt(string_t *input, const arguments_t *args) {
+	if (args->flags['d'].present && input->len >= 16
+		&& string_starts_with(*input, string_from_chars("Salted__"))) {
+		uint64_t salt = uint64_endianess(*(uint64_t *)(input->ptr + 8), BIG_ENDIAN);
+		string_t cleared_input = string_dup((string_t){ .ptr = input->ptr + 16, .len = input->len - 16 });
+
+		free(input->ptr);
+		*input = cleared_input;
+
+		printf("salt: %016llx\n", salt);
+		return salt;
+	}
+
 	if (args->flags['s'].present)
 		return uint64_endianess(parse_hex(args->flags['s'].argument), BIG_ENDIAN);
 
@@ -247,22 +259,28 @@ uint64_t	des_get_salt(const arguments_t *args) {
 	return salt;
 }
 
-uint64_t	des_get_key(const arguments_t *args) {
+uint64_t	des_get_key(string_t *input, const arguments_t *args, string_t *salt_output) {
 	if (args->flags['k'].present) {
 		return parse_hex(args->flags['k'].argument);
 	}
 
 	string_t pass = string_from_chars(des_get_password(args));
-	uint64_t salt = des_get_salt(args);
+	uint64_t salt = des_get_salt(input, args);
 
-	string_t hash = pbkdf2(pass, (string_t){ .len = sizeof(salt), .ptr = (uint8_t *)&salt }, 10000, 8);
+	uint64_t salt_big_endian = uint64_endianess(salt, BIG_ENDIAN);
+	*salt_output = string_join(
+		string_from_chars("Salted__"),
+		(string_t){ .len = sizeof(salt_big_endian), .ptr = (uint8_t *)&salt_big_endian },
+		JOIN_FREE_NONE
+	);
+
+	string_t hash = pbkdf2(pass, (string_t){ .len = sizeof(salt), .ptr = (uint8_t *)&salt }, 1000, 8);
 	uint64_t key = uint64_endianess(*(uint64_t *)hash.ptr, BIG_ENDIAN);
 	free(hash.ptr);
 
 	return key;
 }
 
-// TODO save the salt
 // TODO cbc mode
 // TODO triple des
 
@@ -270,16 +288,24 @@ string_t	des_ecb_cipher(const string_t *input, const arguments_t *args) {
 	if (args->flags['a'].present && args->flags['d'].present)
 		string_apply_inplace((string_t *)input, base64_decode);
 
-	uint64_t key = des_get_key(args);
+	string_t salt_output = { .len = 0, .ptr = NULL };
+	uint64_t key = des_get_key((string_t *)input, args, &salt_output);
 	uint64_t *subkeys = key_schedule(key, args->flags['d'].present);
 
-	string_t	output = string_new((input->len / 8 + !(args->flags['d'].present)) * 8);
+	printf("key : %016llx\n", key);
+
+	string_t output = string_new((input->len / 8 + !(args->flags['d'].present)) * 8);
 
 	FOR_DES_BLOCK(output) {
 		uint64_t block = des_feistel(GET_DES_BLOCK(input), subkeys);
 
 		((uint64_t *)output.ptr)[GET_DES_BLOCK_INDEX()] = uint64_endianess(block, BIG_ENDIAN);
 	}
+
+	if (!args->flags['d'].present) {
+		output = string_join(salt_output, output, JOIN_FREE_B);
+	}
+	free(salt_output.ptr);
 
 	if (args->flags['d'].present && output.len > 0) {
 		size_t padding = output.ptr[output.len - 1];

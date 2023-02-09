@@ -15,4 +15,11 @@ fclean:
 
 re: fclean all
 
-.PHONY = all clean fclean re
+test:
+	echo "$(curl 'https://google.com')" > original.html
+	echo "password" > password_file
+	openssl des-ecb -p -in original.html -out ciphertext.html -pass "pass::$(cat password_file)"
+	./ft_ssl des-ecb -d -i ciphertext.html -o decrypted.html -p "$(cat password_file)"
+	open decrypted.html
+
+.PHONY = all clean fclean re test

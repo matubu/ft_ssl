@@ -100,3 +100,15 @@ string_t	string_join(string_t a, string_t b, int free_mask) {
 
 	return (new);
 }
+
+int	string_starts_with(string_t s, string_t prefix) {
+	if (s.len < prefix.len)
+		return (0);
+
+	for (size_t i = 0; i < prefix.len; ++i) {
+		if (s.ptr[i] != prefix.ptr[i])
+			return (0);
+	}
+
+	return (1);
+}
