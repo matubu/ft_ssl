@@ -56,6 +56,7 @@ string_t hmac256(string_t *key, const string_t *message) {
 	free(block_sized_key.ptr);
 	free(o_key_pad.ptr);
 	free(i_key_pad.ptr);
+	free(inner_hash.ptr);
 
 	return outer_hash;
 }

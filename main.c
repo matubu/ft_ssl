@@ -85,7 +85,7 @@ arguments_t	parse_arguments(const char **av) {
 
 				read_stdin = 0;
 				if (readfile(*av, &file) == 0) {
-					push_input(&args.inputs, string_from_ptr((uint8_t *)*av), InputFile, file);
+					push_input(&args.inputs, string_from_ptr(*av), InputFile, file);
 				}
 			}
 			if (flag->type == FlagOutput) {
@@ -105,7 +105,7 @@ arguments_t	parse_arguments(const char **av) {
 
 		read_stdin = 0;
 		if (readfile(*av, &file) == 0) {
-			push_input(&args.inputs, string_from_ptr((uint8_t *)*av), InputFile, file);
+			push_input(&args.inputs, string_from_ptr(*av), InputFile, file);
 		}
 		++av;
 	}

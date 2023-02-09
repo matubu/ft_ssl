@@ -18,7 +18,7 @@ re: fclean all
 test: all
 	echo "$$(curl 'https://google.com')" > original.html
 	echo "password" > password_file
-	openssl des-ecb -pbkdf2 -p -in original.html -out ciphertext.html -pass "pass::$$(cat password_file)"
+	openssl des-ecb -provider legacy -provider default -pbkdf2 -p -in original.html -out ciphertext.html -pass "pass::$$(cat password_file)"
 	./ft_ssl des-ecb -d -i ciphertext.html -o decrypted.html -p "$$(cat password_file)"
 	open decrypted.html
 

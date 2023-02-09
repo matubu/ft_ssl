@@ -58,8 +58,8 @@ string_t	string_dup(string_t s) {
 	return ((string_t){ .ptr = ptr, .len = s.len });
 }
 
-string_t	string_from_ptr(uint8_t *s) {
-	return ((string_t){ .ptr = s, .len = slen(s) });
+string_t	string_from_ptr(const char *s) {
+	return ((string_t){ .ptr = (uint8_t *)s, .len = slen((uint8_t *)s) });
 }
 
 string_t	string_from_chars(const char *s) {
