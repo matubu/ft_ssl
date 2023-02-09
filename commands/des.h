@@ -236,13 +236,13 @@ const char	*des_get_password(const arguments_t *args) {
 uint64_t	des_get_salt(string_t *input, const arguments_t *args) {
 	if (args->flags['d'].present && input->len >= 16
 		&& string_starts_with(*input, string_from_ptr("Salted__"))) {
-		uint64_t salt = uint64_endianess(*(uint64_t *)(input->ptr + 8), BIG_ENDIAN);
+		uint64_t salt = *(uint64_t *)(input->ptr + 8);
 		string_t cleared_input = string_dup((string_t){ .ptr = input->ptr + 16, .len = input->len - 16 });
 
 		free(input->ptr);
 		*input = cleared_input;
 
-		printf("salt: %016lX\n", salt);
+		printf("salt: %016llX\n", salt);
 		return salt;
 	}
 
@@ -293,7 +293,7 @@ string_t	des_ecb_cipher(const string_t *input, const arguments_t *args) {
 	uint64_t key = des_get_key((string_t *)input, args, &salt_output);
 	uint64_t *subkeys = key_schedule(key, args->flags['d'].present);
 
-	printf("key : %016lX\n", key);
+	printf("key : %016llX\n", key);
 
 	string_t output = string_new((input->len / 8 + !(args->flags['d'].present)) * 8);
 

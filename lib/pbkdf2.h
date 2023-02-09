@@ -62,6 +62,16 @@ string_t hmac256(string_t *key, const string_t *message) {
 }
 
 string_t pbkdf2(string_t password, string_t salt, uint64_t iterations, uint64_t keylen) {
+	// printf("password== ");
+	// for (size_t k = 0; k < password.len; ++k)
+	// 	printf("%02x", password.ptr[k]);
+	// printf("\n");
+
+	// printf("salt== ");
+	// for (size_t k = 0; k < salt.len; ++k)
+	// 	printf("%02x", salt.ptr[k]);
+	// printf("\n");
+
 	string_t t = string_new(HASH_SIZE);
 
 	uint8_t i[4] = {0, 0, 0, 1};
@@ -72,11 +82,21 @@ string_t pbkdf2(string_t password, string_t salt, uint64_t iterations, uint64_t 
 
 	for (size_t k = 0; k < u_curr.len; ++k)
 		t.ptr[k] = u_curr.ptr[k];
+	
+	// printf("u[0]: ");
+	// for (size_t k = 0; k < u_curr.len; ++k)
+	// 	printf("%02x", u_curr.ptr[k]);
+	// printf("\n");
 
 	for (uint64_t j = 1; j < iterations; ++j) {
 		string_t u_next = hmac256(&password, &u_curr);
 		free(u_curr.ptr);
 		u_curr = u_next;
+
+		// printf("u[%llu]: ", j);
+		// for (size_t k = 0; k < u_curr.len; ++k)
+		// 	printf("%02x", u_curr.ptr[k]);
+		// printf("\n");
 
 		for (size_t k = 0; k < u_curr.len; ++k)
 			t.ptr[k] ^= u_curr.ptr[k];
