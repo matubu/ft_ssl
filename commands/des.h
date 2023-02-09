@@ -242,7 +242,7 @@ uint64_t	des_get_salt(string_t *input, const arguments_t *args) {
 		free(input->ptr);
 		*input = cleared_input;
 
-		printf("salt: %016llX\n", salt);
+		// printf("salt: %016llX\n", salt);
 		return salt;
 	}
 
@@ -292,7 +292,7 @@ string_t	des_ecb_cipher(const string_t *input, const arguments_t *args) {
 	uint64_t key = des_get_key((string_t *)input, args, &salt_output);
 	uint64_t *subkeys = key_schedule(key, args->flags['d'].present);
 
-	printf("key : %016llX\n", key);
+	// printf("key : %016llX\n", key);
 
 	string_t output = string_new((input->len / 8 + !(args->flags['d'].present)) * 8);
 

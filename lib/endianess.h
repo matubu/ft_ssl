@@ -1,7 +1,12 @@
 #pragma once
 
 #include <stdint.h>
-#include <machine/endian.h>
+
+#if defined(__linux__)
+# include <endian.h>
+#elif defined(__APPLE__)
+# include <machine/endian.h>
+#endif
 
 // LITTLE_ENDIAN
 // BIG_ENDIAN
