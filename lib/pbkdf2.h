@@ -60,7 +60,6 @@ string_t hmac256(string_t *key, const string_t *message) {
 	return outer_hash;
 }
 
-
 string_t pbkdf2(string_t password, string_t salt, uint64_t iterations, uint64_t keylen) {
 	string_t t = string_new(HASH_SIZE);
 
@@ -82,11 +81,6 @@ string_t pbkdf2(string_t password, string_t salt, uint64_t iterations, uint64_t 
 			t.ptr[k] ^= u_curr.ptr[k];
 	}
 	free(u_curr.ptr);
-
-	printf("key=");
-	for (size_t i = 0; i < t.len; ++i)
-		printf("%02x", t.ptr[i]);
-	printf("\n");
 
 	t.len = keylen;
 

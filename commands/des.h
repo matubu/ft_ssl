@@ -118,12 +118,8 @@ uint32_t	des_feistel_f_function(uint32_t block, uint64_t subkey) {
 	// Step 1: Expansion permutation
 	uint64_t	expanded_block = permute(block, des_exp, 32, 48);
 
-	printf("expanded_block: %016llx\n", expanded_block);
-
 	// Step 2: Key mixing
 	uint64_t	mixed_block = expanded_block ^ subkey;
-
-	printf("mixed_block: %016llx\n", mixed_block);
 
 	// Step 3: S-box substitution
 	uint32_t	substituted_block = 0;
@@ -139,8 +135,6 @@ uint32_t	des_feistel_f_function(uint32_t block, uint64_t subkey) {
 			|= des_sbox[i][idx] << ((7-i) * 4);
 	}
 
-	printf("substituted_block: %08x\n", substituted_block);
-
 	// Step 4: Permutation
 	uint32_t	permutated_block = permute(substituted_block, des_p_pbox, 32, 32);
 
@@ -148,33 +142,20 @@ uint32_t	des_feistel_f_function(uint32_t block, uint64_t subkey) {
 }
 
 uint64_t	des_feistel(uint64_t block, uint64_t *subkeys) {
-
 	block = permute(block, des_ip_pbox, 64, 64);
-	printf("blockin: %llx\n", block);
-	for (size_t i = 0; i < 16; ++i) {
-		printf("subkey %zu: %llx\n", i, subkeys[i]);
-	}
 
 	for (size_t i = 0; i < 16; ++i) {
 		uint32_t	left = block >> 32;
 		uint32_t	right = block & 0xFFFFFFFF;
 
-		printf("left: %x\n", left);
-		printf("right: %x\n", right);
-
 		uint32_t	f = des_feistel_f_function(right, subkeys[i]);
-		printf("f[%zu]: %x\n", i, f);
 
 		block = ((uint64_t)right << 32) | (left ^ f);
 	}
 
 	block = ((block & 0xFFFFFFFF) << 32) | (block >> 32);
 
-	printf("blockout: %llx\n", block);
-
 	block = permute(block, des_inverse_ip_pbox, 64, 64);
-
-	printf("blockout perm: %llx\n", block);
 
 	return block;
 }
@@ -184,8 +165,6 @@ uint64_t	*key_schedule(uint64_t key, int reverse) {
 
 	key = permute(key, des_pc_1, 64, 56);
 
-	printf("key perm: %llx\n", key);
-
 	uint64_t	left = (key >> 28) & 0xFFFFFFF;
 	uint64_t	right = key & 0xFFFFFFF;
 
@@ -194,9 +173,7 @@ uint64_t	*key_schedule(uint64_t key, int reverse) {
 		left = leftrotate(left, des_rotation_table[i], 28);
 
 		uint64_t concat = (left << 28) | right;
-		printf("concat[%zu]: %llx\n", i, concat);
 		subkeys[i] = permute(concat, des_pc_2, 56, 48);
-		printf(" -> %llx\n", subkeys[i]);
 	}
 
 	if (reverse) {
@@ -210,7 +187,7 @@ uint64_t	*key_schedule(uint64_t key, int reverse) {
 	return subkeys;
 }
 
-#define FOR_DES_BLOCK(input) for (size_t i = 0; i < input->len; i += 8)
+#define FOR_DES_BLOCK(output) for (size_t i = 0; i < output.len; i += 8)
 #define GET_DES_BLOCK_INDEX() (i / 8)
 #define GET_DES_BLOCK(input) ({ \
 		char block[8]; \
@@ -285,22 +262,32 @@ uint64_t	des_get_key(const arguments_t *args) {
 	return key;
 }
 
-string_t	des_cbc_cipher(const string_t *input, const arguments_t *args) {
+// TODO save the salt
+// TODO cbc mode
+// TODO triple des
+
+string_t	des_ecb_cipher(const string_t *input, const arguments_t *args) {
 	if (args->flags['a'].present && args->flags['d'].present)
 		string_apply_inplace((string_t *)input, base64_decode);
 
 	uint64_t key = des_get_key(args);
 	uint64_t *subkeys = key_schedule(key, args->flags['d'].present);
 
-	printf("key: %016llx\n", key);
-	string_t	output = string_new((input->len + 7) / 8 * 8);
+	string_t	output = string_new((input->len / 8 + !(args->flags['d'].present)) * 8);
 
-	FOR_DES_BLOCK(input) {
+	FOR_DES_BLOCK(output) {
 		uint64_t block = des_feistel(GET_DES_BLOCK(input), subkeys);
 
 		((uint64_t *)output.ptr)[GET_DES_BLOCK_INDEX()] = uint64_endianess(block, BIG_ENDIAN);
+	}
 
-		printf("out -> %016llx\n", block);
+	if (args->flags['d'].present && output.len > 0) {
+		size_t padding = output.ptr[output.len - 1];
+
+		if (padding > 8 || padding > output.len)
+			DIE("Invalid padding");
+
+		output.len -= padding;
 	}
 
 	if (args->flags['a'].present && !args->flags['d'].present)
@@ -309,7 +296,7 @@ string_t	des_cbc_cipher(const string_t *input, const arguments_t *args) {
 	return output;
 }
 
-string_t	des_ecb_cipher(const string_t *input, const arguments_t *args) {
+string_t	des_cbc_cipher(const string_t *input, const arguments_t *args) {
 	(void)(input); (void)(args);
 	return (string_t){ .ptr = NULL, .len = 0 };
 }
