@@ -267,10 +267,9 @@ uint64_t	des_get_key(string_t *input, const arguments_t *args, string_t *salt_ou
 	string_t pass = string_from_ptr(des_get_password(args));
 	uint64_t salt = des_get_salt(input, args);
 
-	uint64_t salt_big_endian = uint64_endianess(salt, BIG_ENDIAN);
 	*salt_output = string_join(
 		string_from_ptr("Salted__"),
-		(string_t){ .len = sizeof(salt_big_endian), .ptr = (uint8_t *)&salt_big_endian },
+		(string_t){ .len = sizeof(salt), .ptr = (uint8_t *)&salt },
 		JOIN_FREE_NONE
 	);
 
