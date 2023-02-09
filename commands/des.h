@@ -242,7 +242,7 @@ uint64_t	des_get_salt(string_t *input, const arguments_t *args) {
 		free(input->ptr);
 		*input = cleared_input;
 
-		printf("salt: %016llx\n", salt);
+		printf("salt: %016llX\n", salt);
 		return salt;
 	}
 
@@ -274,7 +274,7 @@ uint64_t	des_get_key(string_t *input, const arguments_t *args, string_t *salt_ou
 		JOIN_FREE_NONE
 	);
 
-	string_t hash = pbkdf2(pass, (string_t){ .len = sizeof(salt), .ptr = (uint8_t *)&salt }, 1000, 8);
+	string_t hash = pbkdf2(pass, (string_t){ .len = sizeof(salt), .ptr = (uint8_t *)&salt }, 8192, 8);
 	uint64_t key = uint64_endianess(*(uint64_t *)hash.ptr, BIG_ENDIAN);
 	free(hash.ptr);
 
@@ -292,7 +292,7 @@ string_t	des_ecb_cipher(const string_t *input, const arguments_t *args) {
 	uint64_t key = des_get_key((string_t *)input, args, &salt_output);
 	uint64_t *subkeys = key_schedule(key, args->flags['d'].present);
 
-	printf("key : %016llx\n", key);
+	printf("key : %016llX\n", key);
 
 	string_t output = string_new((input->len / 8 + !(args->flags['d'].present)) * 8);
 
