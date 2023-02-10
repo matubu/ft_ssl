@@ -187,15 +187,15 @@ uint64_t	*key_schedule(uint64_t key, int reverse) {
 	return subkeys;
 }
 
-#define FOR_DES_BLOCK(output) for (size_t i = 0; i < output.len; i += 8)
+#define FOR_DES_BLOCK(output) for (size_t i = 0; i < (output).len; i += 8)
 #define GET_DES_BLOCK_INDEX() (i / 8)
 #define GET_DES_BLOCK(input) ({ \
 		char block[8]; \
 		for (size_t j = 0; j < 8; ++j) { \
-			if (i + j < input->len) \
-				block[7 - j] = input->ptr[i + j]; \
+			if (i + j < (input)->len) \
+				block[7 - j] = (input)->ptr[i + j]; \
 			else \
-				block[7 - j] = (i + 8) - input->len; \
+				block[7 - j] = (i + 8) - (input)->len; \
 		} \
 		*(uint64_t *)block; \
 })
@@ -259,7 +259,7 @@ uint64_t	des_get_salt(string_t *input, const arguments_t *args) {
 	return salt;
 }
 
-uint64_t	des_get_key(string_t *input, const arguments_t *args, string_t *salt_output) {
+uint64_t	des_get_key(string_t *input, const arguments_t *args, string_t *salt_str) {
 	if (args->flags['k'].present) {
 		return parse_hex(args->flags['k'].argument);
 	}
@@ -267,7 +267,7 @@ uint64_t	des_get_key(string_t *input, const arguments_t *args, string_t *salt_ou
 	string_t pass = string_from_ptr(des_get_password(args));
 	uint64_t salt = des_get_salt(input, args);
 
-	*salt_output = string_join(
+	*salt_str = string_join(
 		string_from_ptr("Salted__"),
 		(string_t){ .len = sizeof(salt), .ptr = (uint8_t *)&salt },
 		JOIN_FREE_NONE
@@ -281,45 +281,61 @@ uint64_t	des_get_key(string_t *input, const arguments_t *args, string_t *salt_ou
 	return key;
 }
 
+typedef struct {
+	string_t	salt_str;
+	string_t	output;
+	uint64_t	key;
+	uint64_t 	*subkeys;
+}	des_t;
+
+string_t	des_postprocessing(des_t *des, const arguments_t *args) {
+	if (!args->flags['d'].present) {
+		des->output = string_join(des->salt_str, des->output, JOIN_FREE_B);
+	}
+	free(des->salt_str.ptr);
+
+	if (args->flags['d'].present && des->output.len > 0) {
+		size_t padding = des->output.ptr[des->output.len - 1];
+
+		if (padding > 8 || padding > des->output.len)
+			DIE("Invalid padding");
+
+		des->output.len -= padding;
+	}
+
+	if (args->flags['a'].present && !args->flags['d'].present)
+		string_apply_inplace(&des->output, base64_encode);
+
+	return des->output;
+}
+
+des_t	des_init(string_t *input, const arguments_t *args) {
+	des_t des;
+
+	if (args->flags['a'].present && args->flags['d'].present)
+		string_apply_inplace((string_t *)input, base64_decode);
+
+	des.salt_str = (string_t){ .len = 0, .ptr = NULL };
+	des.output = string_new((input->len / 8 + !(args->flags['d'].present)) * 8);
+	des.key = des_get_key((string_t *)input, args, &des.salt_str);
+	des.subkeys = key_schedule(des.key, args->flags['d'].present);
+
+	return des;
+}
+
 // TODO cbc mode
 // TODO triple des
 
 string_t	des_ecb_cipher(const string_t *input, const arguments_t *args) {
-	if (args->flags['a'].present && args->flags['d'].present)
-		string_apply_inplace((string_t *)input, base64_decode);
+	des_t des = des_init((string_t *)input, args);
 
-	string_t salt_output = { .len = 0, .ptr = NULL };
-	uint64_t key = des_get_key((string_t *)input, args, &salt_output);
-	uint64_t *subkeys = key_schedule(key, args->flags['d'].present);
+	FOR_DES_BLOCK(des.output) {
+		uint64_t block = des_feistel(GET_DES_BLOCK(input), des.subkeys);
 
-	printf("key : %016llX\n", key);
-
-	string_t output = string_new((input->len / 8 + !(args->flags['d'].present)) * 8);
-
-	FOR_DES_BLOCK(output) {
-		uint64_t block = des_feistel(GET_DES_BLOCK(input), subkeys);
-
-		((uint64_t *)output.ptr)[GET_DES_BLOCK_INDEX()] = uint64_endianess(block, BIG_ENDIAN);
+		((uint64_t *)des.output.ptr)[GET_DES_BLOCK_INDEX()] = uint64_endianess(block, BIG_ENDIAN);
 	}
 
-	if (!args->flags['d'].present) {
-		output = string_join(salt_output, output, JOIN_FREE_B);
-	}
-	free(salt_output.ptr);
-
-	if (args->flags['d'].present && output.len > 0) {
-		size_t padding = output.ptr[output.len - 1];
-
-		if (padding > 8 || padding > output.len)
-			DIE("Invalid padding");
-
-		output.len -= padding;
-	}
-
-	if (args->flags['a'].present && !args->flags['d'].present)
-		string_apply_inplace(&output, base64_encode);
-
-	return output;
+	return des_postprocessing(&des, args);
 }
 
 string_t	des_cbc_cipher(const string_t *input, const arguments_t *args) {
