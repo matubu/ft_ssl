@@ -28,6 +28,9 @@ test: all
 
 	open decrypted.html
 
+
+	 ./ft_ssl des -i main.c -v 0 -p "des" | openssl des -pbkdf2 -d -iv 0 -p -pass "pass:des"
+
 clean_test:
 	rm original.html ciphertext.html decrypted.html password_file
 

@@ -242,7 +242,6 @@ uint64_t	des_get_salt(string_t *input, const arguments_t *args) {
 		free(input->ptr);
 		*input = cleared_input;
 
-		printf("salt: %016llX\n", salt);
 		return salt;
 	}
 
@@ -267,14 +266,14 @@ uint64_t	des_get_key(string_t *input, const arguments_t *args, string_t *salt_st
 	string_t pass = string_from_ptr(des_get_password(args));
 	uint64_t salt = des_get_salt(input, args);
 
+	string_t hash = pbkdf2(pass, (string_t){ .len = sizeof(salt), .ptr = (uint8_t *)&salt }, 10000, 8);
+	uint64_t key = uint64_endianess(*(uint64_t *)hash.ptr, BIG_ENDIAN);
+
 	*salt_str = string_join(
 		string_from_ptr("Salted__"),
 		(string_t){ .len = sizeof(salt), .ptr = (uint8_t *)&salt },
 		JOIN_FREE_NONE
 	);
-
-	string_t hash = pbkdf2(pass, (string_t){ .len = sizeof(salt), .ptr = (uint8_t *)&salt }, 10000, 8);
-	uint64_t key = uint64_endianess(*(uint64_t *)hash.ptr, BIG_ENDIAN);
 
 	free(hash.ptr);
 
@@ -316,9 +315,9 @@ des_t	des_init(string_t *input, const arguments_t *args) {
 		string_apply_inplace((string_t *)input, base64_decode);
 
 	des.salt_str = (string_t){ .len = 0, .ptr = NULL };
-	des.output = string_new((input->len / 8 + !(args->flags['d'].present)) * 8);
 	des.key = des_get_key((string_t *)input, args, &des.salt_str);
 	des.subkeys = key_schedule(des.key, args->flags['d'].present);
+	des.output = string_new((input->len / 8 + !(args->flags['d'].present)) * 8);
 
 	return des;
 }
@@ -339,6 +338,43 @@ string_t	des_ecb_cipher(const string_t *input, const arguments_t *args) {
 }
 
 string_t	des_cbc_cipher(const string_t *input, const arguments_t *args) {
-	(void)(input); (void)(args);
-	return (string_t){ .ptr = NULL, .len = 0 };
+	des_t des = des_init((string_t *)input, args);
+
+	if (!args->flags['v'].argument) {
+		DIE("No IV specified");
+	}
+
+	uint64_t iv = parse_hex(args->flags['v'].argument);
+	uint64_t xor;
+	uint64_t xor_next = iv;
+
+	dprintf(2, "salt=%016llX\n", *(uint64_t *)(des.salt_str.ptr + 8));
+	dprintf(2, "key=%016llX\n", des.key);
+	dprintf(2, "iv=%016llX\n", iv);
+
+	FOR_DES_BLOCK(des.output) {
+		uint64_t in = GET_DES_BLOCK(input);
+
+		xor = xor_next;
+
+		if (!(args->flags['d'].present))
+			in ^= xor;
+		else
+			xor_next = in;
+
+		uint64_t block = des_feistel(in, des.subkeys);
+
+		if (args->flags['d'].present)
+			block ^= xor;
+		else
+			xor_next = block;
+
+		((uint64_t *)des.output.ptr)[GET_DES_BLOCK_INDEX()] = uint64_endianess(block, BIG_ENDIAN);
+	}
+
+	write(2, des.output.ptr, des.output.len);
+	dprintf(2, "inputlen: %zu, input: %zu", input->len, input->len / 8 * 8);
+	dprintf(2, "outputlen: %zu, output: %zu", des.output.len, des.output.len / 8 * 8);
+
+	return des_postprocessing(&des, args);
 }
