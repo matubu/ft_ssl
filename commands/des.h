@@ -348,10 +348,6 @@ string_t	des_cbc_cipher(const string_t *input, const arguments_t *args) {
 	uint64_t xor;
 	uint64_t xor_next = iv;
 
-	dprintf(2, "salt=%016llX\n", *(uint64_t *)(des.salt_str.ptr + 8));
-	dprintf(2, "key=%016llX\n", des.key);
-	dprintf(2, "iv=%016llX\n", iv);
-
 	FOR_DES_BLOCK(des.output) {
 		uint64_t in = GET_DES_BLOCK(input);
 
@@ -371,10 +367,6 @@ string_t	des_cbc_cipher(const string_t *input, const arguments_t *args) {
 
 		((uint64_t *)des.output.ptr)[GET_DES_BLOCK_INDEX()] = uint64_endianess(block, BIG_ENDIAN);
 	}
-
-	write(2, des.output.ptr, des.output.len);
-	dprintf(2, "inputlen: %zu, input: %zu", input->len, input->len / 8 * 8);
-	dprintf(2, "outputlen: %zu, output: %zu", des.output.len, des.output.len / 8 * 8);
 
 	return des_postprocessing(&des, args);
 }
