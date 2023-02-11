@@ -29,7 +29,10 @@ typedef struct {
 
 typedef struct {
 	void	*fn;
+	// Fn(input: string_t *, args: arguments_t *) -> string_t
+
 	void	*print_fn;
+	// Print(fd: int, output: string_t *, currentInput: input_t *, args: arguments_t *)
 }	t_func;
 
 typedef struct {
@@ -50,9 +53,7 @@ typedef struct {
 		{
 			t_func	fn;
 		}	oneway;
-		// Fn(input: string_t, args: arguments_t)
 	} u;
-	// Print(output: string_t, currentInput: input_t, args: arguments_t)
 }	command_t;
 
 typedef struct input_s {

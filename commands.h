@@ -54,10 +54,10 @@ const command_t	commands[] = {
 		.d = {base64_decode, rawtextdump}
 	}, .flags = base64_flags },
 
-	{ .name = "des"    , .fn_type = OneWayFn, .u.oneway.fn = {des_cbc_cipher, rawtextdump}, .flags = cipher_flags },
-	{ .name = "des-ecb", .fn_type = OneWayFn, .u.oneway.fn = {des_ecb_cipher, rawtextdump}, .flags = cipher_flags },
-	{ .name = "des-cbc", .fn_type = OneWayFn, .u.oneway.fn = {des_cbc_cipher, rawtextdump}, .flags = cipher_flags },
-	{ .name = "des-ede", .fn_type = OneWayFn, .u.oneway.fn = {des_ede_cipher, rawtextdump}, .flags = cipher_flags },
+	{ .name = "des"    , .fn_type = OneWayFn, .u.oneway.fn = {des_cbc_cipher, des_print}, .flags = cipher_flags },
+	{ .name = "des-ecb", .fn_type = OneWayFn, .u.oneway.fn = {des_ecb_cipher, des_print}, .flags = cipher_flags },
+	{ .name = "des-cbc", .fn_type = OneWayFn, .u.oneway.fn = {des_cbc_cipher, des_print}, .flags = cipher_flags },
+	{ .name = "des-ede", .fn_type = OneWayFn, .u.oneway.fn = {des_ede_cipher, des_print}, .flags = cipher_flags },
 };
 size_t	commands_count = sizeof(commands) / sizeof(commands[0]);
 

@@ -392,3 +392,11 @@ string_t	des_ede_cipher(const string_t *input, const arguments_t *args) {
 
 	return des_postprocessing(&des, args);
 }
+
+void	des_print(int fd, const string_t *s, const input_t *curr, const arguments_t *args) {
+	(void)curr;
+
+	write(fd, s->ptr, s->len);
+	if (args->flags['a'].present && !args->flags['d'].present)
+		write(fd, "\n", 1);
+}
