@@ -1,4 +1,4 @@
-echo -n $1 | ./ft_ssl base64 -q | tee base64_ft_ssl
+echo -n $1 | ./ft_ssl base64 | tee base64_ft_ssl
 echo -n $1 | openssl base64 | tee base64_openssl
 
 # ./a.out | ./ft_ssl base64 -q > base64_ft_ssl
