@@ -57,6 +57,7 @@ const command_t	commands[] = {
 	{ .name = "des"    , .fn_type = OneWayFn, .u.oneway.fn = {des_cbc_cipher, rawtextdump}, .flags = cipher_flags },
 	{ .name = "des-ecb", .fn_type = OneWayFn, .u.oneway.fn = {des_ecb_cipher, rawtextdump}, .flags = cipher_flags },
 	{ .name = "des-cbc", .fn_type = OneWayFn, .u.oneway.fn = {des_cbc_cipher, rawtextdump}, .flags = cipher_flags },
+	{ .name = "des-ede", .fn_type = OneWayFn, .u.oneway.fn = {des_ede_cipher, rawtextdump}, .flags = cipher_flags },
 };
 size_t	commands_count = sizeof(commands) / sizeof(commands[0]);
 
