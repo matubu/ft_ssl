@@ -262,8 +262,8 @@ uint64_t	*des_get_key(string_t *input, const arguments_t *args, string_t *salt_s
 
 	if (args->flags['k'].present) {
 		keys[0] = parse_hex(args->flags['k'].argument);
-		if (slen((uint8_t *)args->flags['k'].argument) > 8)
-			keys[1] = parse_hex(args->flags['k'].argument + 8);
+		if (slen((uint8_t *)args->flags['k'].argument) > 16)
+			keys[1] = parse_hex(args->flags['k'].argument + 16);
 		return keys;
 	}
 
@@ -274,9 +274,6 @@ uint64_t	*des_get_key(string_t *input, const arguments_t *args, string_t *salt_s
 
 	keys[0] = uint64_endianess(*(uint64_t *)hash.ptr, BIG_ENDIAN);
 	keys[1] = uint64_endianess(*(uint64_t *)(hash.ptr + 8), BIG_ENDIAN);
-
-	printf("Keys[0] = %016llx\n", keys[0]);
-	printf("Keys[1] = %016llx\n", keys[1]);
 
 	*salt_str = string_join(
 		string_from_ptr("Salted__"),
@@ -325,15 +322,12 @@ des_t	des_init(string_t *input, const arguments_t *args) {
 
 	des.salt_str = (string_t){ .len = 0, .ptr = NULL };
 	des.keys = des_get_key((string_t *)input, args, &des.salt_str);
-	printf("%016llx\n", des.keys[0]);
 	key_schedule(des.subkeys, des.keys[0], args->flags['d'].present);
 
 	des.output = string_new((input->len / 8 + !(args->flags['d'].present)) * 8);
 
 	return des;
 }
-
-// TODO triple des
 
 string_t	des_ecb_cipher(const string_t *input, const arguments_t *args) {
 	des_t des = des_init((string_t *)input, args);

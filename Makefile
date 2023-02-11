@@ -32,11 +32,12 @@ test: all
 	./ft_ssl des -i main.c -v 0 -p "des" | openssl des -pbkdf2 -d -iv 0 -p -pass "pass:des"
 
 
-	# openssl des-ede-cbc -pbkdf2 -pass "pass:password" -in main.c | openssl des-ede-cbc -pbkdf2 -pass "pass:password" -d
-	./ft_ssl des-ede -i main.c -p "test" -o out | openssl des-ede -in out -pbkdf2 -pass "pass:test" -d
-	openssl des-ede -in main.c -pbkdf2 -pass "pass:test" | ./ft_ssl des-ede -p "test" -i out -d
+	openssl des-ede-cbc -pbkdf2 -pass "pass:password" -in main.c | openssl des-ede-cbc -pbkdf2 -pass "pass:password" -d
+	./ft_ssl des-ede -i main.c -p "test" -o out; openssl des-ede -in out -pbkdf2 -pass "pass:test" -d
+	openssl des-ede -in main.c -pbkdf2 -pass "pass:test" -out out; ./ft_ssl des-ede -p "test" -i out -d
+	openssl des-ede -in main.c -K 12345678901234567890 -out out -p; ./ft_ssl des-ede -k 12345678901234567890 -i out -d
 
 clean_test:
-	rm original.html ciphertext.html decrypted.html password_file
+	rm original.html ciphertext.html decrypted.html password_file out
 
 .PHONY = all clean fclean re test clean_test
