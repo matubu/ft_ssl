@@ -4,28 +4,7 @@
 #include "lib/io.h"
 #include "lib/dump.h"
 #include "lib/readfile.h"
-
-typedef struct {
-	enum {
-		FlagNone = 0,
-		Flag,
-		FlagArgument,
-		FlagInput,
-		FlagInputFile,
-		FlagOutput
-	}			type;
-	char		*description;
-
-// private
-	int			present;
-	const char	*argument;
-}	flag_t;
-
-#define newFlag(_type, _description, ...) ((flag_t){ \
-	.type = _type, \
-	.description = _description, \
-	__VA_ARGS__ \
-})
+#include "flag.h"
 
 typedef struct {
 	void	*fn;
@@ -36,11 +15,12 @@ typedef struct {
 }	t_func;
 
 typedef struct {
-	char			*name;
-	const flag_t	*flags;
+	const char		*name;
+	flag_t			*flags;
 	enum {
 		OneWayFn,
 		TwoWayFn,
+		GeneratorFn
 	}	fn_type;
 	union
 	{
@@ -53,8 +33,13 @@ typedef struct {
 		{
 			t_func	fn;
 		}	oneway;
+		struct
+		{
+			t_func	fn;
+		}	generator;
 	} u;
 }	command_t;
+
 
 typedef struct input_s {
 	string_t			filename;
@@ -67,15 +52,17 @@ typedef struct input_s {
 	struct input_s		*next;
 }	input_t;
 
+
 typedef struct {
 	const command_t	*command;
-	flag_t			flags[256];
 	input_t			*inputs;        // Needs to be free
 	int				out_fd;
+	flag_t			*flags;
 }	arguments_t;
 
-void	print_origin(int fd, const input_t *curr, const arguments_t *args) {
-	if (curr->origin == InputStdin && !args->flags['p'].present) {
+
+void	print_origin(int fd, const input_t *curr) {
+	if (curr->origin == InputStdin) {
 		PUTSTR(fd, "\x1b[94mStdin\x1b[0m");
 	} else if (curr->filename.ptr) {
 		PUTSTR(fd, "\x1b[94mFile\x1b[0m<");
@@ -89,17 +76,17 @@ void	print_origin(int fd, const input_t *curr, const arguments_t *args) {
 }
 
 void	hash_print(int fd, const string_t *oneway, const input_t *curr, const arguments_t *args) {
-	if (args->flags['r'].present) {
+	if (get_flag(args->flags, "-r")->present) {
 		hexdump(fd, oneway);
-		if (!args->flags['q'].present) {
+		if (!get_flag(args->flags, "-q")->present) {
 			PUTSTR(fd, " ");
-			print_origin(fd, curr, args);
+			print_origin(fd, curr);
 		}
 	} else {
-		if (!args->flags['q'].present) {
+		if (!get_flag(args->flags, "-q")->present) {
 			putstr(fd, args->command->name);
 			PUTSTR(fd, "(");
-			print_origin(fd, curr, args);
+			print_origin(fd, curr);
 			PUTSTR(fd, ") = ");
 		}
 		hexdump(fd, oneway);

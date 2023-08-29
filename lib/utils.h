@@ -8,6 +8,9 @@
 #include "lib/string.h"
 #include "lib/malloc.h"
 
+typedef __uint128_t uint128_t;
+typedef __int128_t  int128_t;
+
 uint64_t	leftrotate(uint64_t n, uint8_t offset, size_t length) {
 	return ((n << offset) | (n >> (length - offset))) & ((1 << length) - 1);
 }

@@ -357,14 +357,14 @@ string_t	des_cbc_cipher(const string_t *input, const arguments_t *args) {
 
 		xor = xor_next;
 
-		if (!(args->flags['d'].present))
+		if (!get_flag(args->flags, "-d")->present)
 			in ^= xor;
 		else
 			xor_next = in;
 
 		uint64_t block = des_feistel(in, des.subkeys);
 
-		if (args->flags['d'].present)
+		if (get_flag(args->flags, "-d")->present)
 			block ^= xor;
 		else
 			xor_next = block;
@@ -380,7 +380,7 @@ string_t	des_ede_cipher(const string_t *input, const arguments_t *args) {
 
 	uint64_t subkeys2[16];
 
-	key_schedule(subkeys2, des.keys[1], !args->flags['d'].present);
+	key_schedule(subkeys2, des.keys[1], !get_flag(args->flags, "-d")->present);
 
 	FOR_DES_BLOCK(des.output) {
 		uint64_t block = des_feistel(GET_DES_BLOCK(input), des.subkeys);
@@ -397,6 +397,6 @@ void	des_print(int fd, const string_t *s, const input_t *curr, const arguments_t
 	(void)curr;
 
 	write(fd, s->ptr, s->len);
-	if (args->flags['a'].present && !args->flags['d'].present)
+	if (get_flag(args->flags, "-a")->present && !get_flag(args->flags, "-d")->present)
 		write(fd, "\n", 1);
 }

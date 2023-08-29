@@ -6,14 +6,12 @@ void	usage(flag_t *flags) {
 	PUTS(2, "");
 	if (flags) {
 		PUTS(2, "Flags:");
-		for (size_t i = 0; i < 256; ++i) {
-			if (flags[i].type != FlagNone) {
-				PUTSTR(2, "  -");
-				write(2, &i, 1);
-				PUTSTR(2, "  ");
-				putstr(2, flags[i].description);
-				PUTS(2, "");
-			}
+		for (size_t i = 0; flags[i].type != FlagNone; ++i) {
+			PUTSTR(2, "  ");
+			putstr(2, flags[i].name);
+			PUTSTR(2, "  ");
+			putstr(2, flags[i].description);
+			PUTS(2, "");
 		}
 		PUTS(2, "");
 	}
@@ -39,7 +37,7 @@ void	push_input(input_t **lst, string_t filename, int origin, string_t str) {
 	*lst = new;
 }
 
-arguments_t	parse_arguments(const char **av) {
+arguments_t	parsearguments(const char **av) {
 	if (av == NULL || *av == NULL) {
 		HELP_AND_DIE(NULL, "missing command");
 	}
@@ -48,21 +46,21 @@ arguments_t	parse_arguments(const char **av) {
 		.command = get_command(*av++),
 		.out_fd = 1
 	};
+
 	if (args.command == NULL) {
 		HELP_AND_DIE(NULL, "no such command");
 	}
-	for (size_t i = 0; i < 256; ++i) {
-		args.flags[i] = args.command->flags[i];
-	}
+
+	args.flags = args.command->flags;
 
 	int			read_stdin = 1;
 
 	while (*av && **av == '-') {
-		if ((*av)[1] == '\0' || (*av)[2] != '\0') {
+		if ((*av)[1] == '\0') {
 			HELP_AND_DIE(args.flags, "invalid flag", *av);
 		}
 
-		flag_t	*flag = &args.flags[(uint8_t)(*av)[1]];
+		flag_t	*flag = get_flag(args.flags, *av);
 
 		if (flag->type == FlagNone) {
 			HELP_AND_DIE(args.flags, "invalid flag", *av);
@@ -110,7 +108,7 @@ arguments_t	parse_arguments(const char **av) {
 		++av;
 	}
 
-	if (read_stdin) {
+	if (args.command->fn_type != GeneratorFn && read_stdin) {
 		string_t	stdin_input = readall(0);
 
 		push_input(&args.inputs, (string_t){ .ptr = NULL, .len = 0 }, InputStdin, stdin_input);
@@ -119,34 +117,56 @@ arguments_t	parse_arguments(const char **av) {
 	return (args);
 }
 
+void	exec_command(const t_func *fn, const input_t *input, const arguments_t *args) {
+	const string_t *input_str = NULL;
+
+	if (input) {
+		input_str = &input->str;
+	}
+
+	string_t	output = ((string_t (*)(const string_t *, const arguments_t *))fn->fn)(input_str, args);
+
+	((void (*)(int, const string_t *, const input_t *, const arguments_t *))
+		fn->print_fn)(args->out_fd, &output, input, args);
+
+	free(output.ptr);
+}
+
 int	main(int ac, const char **av) {
 	(void)ac;
-	arguments_t	args = parse_arguments(av + 1);
 
-	input_t	*ptr = args.inputs;
+	arguments_t	args = parsearguments(av + 1);
 
-	while (ptr) {
-		input_t	*next = ptr->next;
+	if (args.command->fn_type == GeneratorFn) {
 
-		const t_func	*fn;
-		if (args.command->fn_type == OneWayFn) {
-			fn = &args.command->u.oneway.fn;
-		} else {
-			if (args.flags['d'].present)
-				fn = &args.command->u.twoway.d;
-			else
-				fn = &args.command->u.twoway.e;
+		exec_command(&args.command->u.generator.fn, NULL, &args);
+
+	}
+	else {
+
+		input_t	*ptr = args.inputs;
+
+		while (ptr) {
+
+			const t_func	*fn;
+			if (args.command->fn_type == OneWayFn) {
+				fn = &args.command->u.oneway.fn;
+			} else {
+				if (get_flag(args.flags, "-d")->present)
+					fn = &args.command->u.twoway.d;
+				else
+					fn = &args.command->u.twoway.e;
+			}
+			
+			exec_command(fn, ptr, &args);
+
+			input_t	*next = ptr->next;
+			free(ptr->str.ptr);
+			free(ptr);
+			ptr = next;
+
 		}
-		string_t	output = ((string_t (*)(const string_t *, const arguments_t *))fn->fn)
-			(&ptr->str, &args);
 
-		((void (*)(int, const string_t *, const input_t *, const arguments_t *))
-			fn->print_fn)(args.out_fd, &output, ptr, &args);
-
-		free(ptr->str.ptr);
-		free(ptr);
-		free(output.ptr);
-		ptr = next;
 	}
 
 	if (args.out_fd != 1)

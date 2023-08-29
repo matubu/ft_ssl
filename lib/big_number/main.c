@@ -46,9 +46,9 @@ int main() {
 		big_number_t *b = big_number_create((uint64_t)1 << 63);
 		big_number_t *c = big_number_mult(a, b);
 
-		printf("a=\x1b[92m%llu\x1b[0m\n", big_number_left_most_bit(a).chunk_index);
-		printf("b=\x1b[92m%llu\x1b[0m\n", big_number_left_most_bit(b).chunk_index);
-		printf("c=\x1b[92m%llu\x1b[0m\n", big_number_left_most_bit(c).chunk_index);
+		// printf("a=\x1b[92m%llu\x1b[0m\n", big_number_left_most_bit(a).chunk_index);
+		// printf("b=\x1b[92m%llu\x1b[0m\n", big_number_left_most_bit(b).chunk_index);
+		// printf("c=\x1b[92m%llu\x1b[0m\n", big_number_left_most_bit(c).chunk_index);
 
 		big_number_print(a);
 		big_number_print(b);

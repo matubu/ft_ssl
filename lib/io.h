@@ -3,8 +3,12 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdint.h>
+#include <fcntl.h>
 
 #include "lib/string.h"
+
+#define TO_STRING(x) #x
+#define TO_STRING_EXPAND(x) TO_STRING(x)
 
 #define PUTSTR(fd, s) write(fd, s, sizeof(s) - 1)
 #define PUTS(fd, s) PUTSTR(fd, s "\n")

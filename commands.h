@@ -11,28 +11,62 @@
 
 #include "commands/des.h"
 
-const flag_t	hash_flags[256] = {
-	['p'] = newFlag(Flag,      "echo STDIN to STDOUT and append the checksum to STDOUT"),
-	['q'] = newFlag(Flag,      "quiet mode"),
-	['r'] = newFlag(Flag,      "reverse the format of the output"),
-	['s'] = newFlag(FlagInput, "print the sum of the given string"),
+#include "commands/rsa/genrsa.h"
+#include "commands/rsa/rsa.h"
+
+flag_t	hash_flags[] = {
+	FLAG("-p", Flag,      "echo STDIN to STDOUT and append the checksum to STDOUT"),
+	FLAG("-q", Flag,      "quiet mode"),
+	FLAG("-r", Flag,      "reverse the format of the output"),
+	FLAG("-s", FlagInput, "print the sum of the given string"),
+	FLAG_NOOP
 };
-const flag_t	base64_flags[256] = {
-	['d'] = newFlag(Flag,          "decode mode"),
-	['e'] = newFlag(Flag,          "encode mode (default)"),
-	['i'] = newFlag(FlagInputFile, "input file"),
-	['o'] = newFlag(FlagOutput,    "output file")
+flag_t	base64_flags[] = {
+	FLAG("-d", Flag,          "decode mode"),
+	FLAG("-e", Flag,          "encode mode (default)"),
+	FLAG("-i" ,FlagInputFile, "input file"),
+	FLAG("-o", FlagOutput,    "output file"),
+	FLAG_NOOP
 };
-const flag_t	cipher_flags[256] = {
-	['a'] = newFlag(Flag,          "decode/encode the input/output in base64, depending on the encrypt mode"),
-	['d'] = newFlag(Flag,          "decrypt mode"),
-	['e'] = newFlag(Flag,          "encrypt mode (default)"),
-	['i'] = newFlag(FlagInputFile, "input file for message"),
-	['k'] = newFlag(FlagArgument,  "key in hex is the next argument"),
-	['o'] = newFlag(FlagOutput,    "output file for message"),
-	['p'] = newFlag(FlagArgument,  "password in ascii is the next argument"),
-	['s'] = newFlag(FlagArgument,  "the salt in hex is the next argument"),
-	['v'] = newFlag(FlagArgument,  "initialization vector in hex is the next argument")
+flag_t	cipher_flags[] = {
+	FLAG("-a", Flag,          "decode/encode the input/output in base64, depending on the encrypt mode"),
+	FLAG("-d", Flag,          "decrypt mode"),
+	FLAG("-e", Flag,          "encrypt mode (default)"),
+	FLAG("-i", FlagInputFile, "input file for message"),
+	FLAG("-k", FlagArgument,  "key in hex is the next argument"),
+	FLAG("-o", FlagOutput,    "output file for message"),
+	FLAG("-p", FlagArgument,  "password in ascii is the next argument"),
+	FLAG("-s", FlagArgument,  "the salt in hex is the next argument"),
+	FLAG("-v", FlagArgument,  "initialization vector in hex is the next argument"),
+	FLAG_NOOP
+};
+flag_t	genrsa_flags[] = {
+	FLAG("-out", FlagOutput,  "output the key to the specified file. If this argument is not specified then standard output is used"),
+	FLAG_NOOP
+};
+flag_t	rsa_flags[] = {
+	FLAG("-inform",  FlagArgument, "input format (PEM)"),
+	FLAG("-outform", FlagArgument, "output format (PEM)"),
+	/*TODO*/FLAG("-in",      FlagInputFile, "input file"),
+	/*TODO*/FLAG("-passin",  FlagArgument, "input file password source"),
+	/*TODO*/FLAG("-out",     FlagOutput,   "output file"),
+	/*TODO*/FLAG("-passout", FlagArgument, "output file password source"),
+	/*TODO*/FLAG("-des",     Flag,         "encrypt the generated key with DES in cbc mode"),
+	/*TODO*/FLAG("-text",    Flag,         "print the key in text form"),
+	/*TODO*/FLAG("-noout",   Flag,         "do not print key out"),
+	/*TODO*/FLAG("-modulus", Flag,         "print the RSA key modulus"),
+	/*TODO*/FLAG("-check",   Flag,         "verify key consistency"),
+	/*TODO*/FLAG("-pubin",   Flag,         "expect a public key in input file"),
+	/*TODO*/FLAG("-pubout",  Flag,         "output a public key"),
+};
+flag_t	rsautl[] = {
+	/*TODO*/FLAG("-in",      FlagInputFile, "input file"),
+	/*TODO*/FLAG("-out",     FlagOutput,   "output file"),
+	/*TODO*/FLAG("-inkey",   FlagArgument, "input key"),
+	/*TODO*/FLAG("-pubin",   Flag,         "expect a public key in input file"),
+	/*TODO*/FLAG("-encrypt", Flag,         "encrypt with public key"),
+	/*TODO*/FLAG("-decrypt", Flag,         "decrypt with private key (default)"),
+	/*TODO*/FLAG("-hexdump", Flag,         "hex dump output"),
 };
 
 const command_t	commands[] = {
@@ -58,7 +92,11 @@ const command_t	commands[] = {
 	{ .name = "des-ecb", .fn_type = OneWayFn, .u.oneway.fn = {des_ecb_cipher, des_print}, .flags = cipher_flags },
 	{ .name = "des-cbc", .fn_type = OneWayFn, .u.oneway.fn = {des_cbc_cipher, des_print}, .flags = cipher_flags },
 	{ .name = "des-ede", .fn_type = OneWayFn, .u.oneway.fn = {des_ede_cipher, des_print}, .flags = cipher_flags },
+
+	{ .name = "genrsa" , .fn_type = GeneratorFn, .u.generator.fn = {genrsa, rawtextdump}, .flags = genrsa_flags },
+	{ .name = "rsa",     .fn_type = OneWayFn,    .u.oneway.fn = {rsa, rawtextdump},    .flags = rsa_flags },
 };
+
 size_t	commands_count = sizeof(commands) / sizeof(commands[0]);
 
 const command_t	*get_command(const char *command) {
