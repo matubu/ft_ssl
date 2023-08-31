@@ -22,6 +22,30 @@ void	hex(int fd, uint8_t c) {
 	write(fd, &"0123456789abcdef"[c & 0x0f], 1);
 }
 
+void	print_u64(int fd, uint64_t n) {
+	char buf[19];
+	char *ptr = (buf + sizeof(buf));
+
+	do {
+		*--ptr = '0' + n % 10;
+		n /= 10;
+	} while (n);
+
+	write(fd, ptr, (buf + sizeof(buf)) - ptr);
+}
+
+void	print_u64_as_hex(int fd, uint64_t n) {
+	char buf[16];
+	char *ptr = (buf + sizeof(buf));
+
+	do {
+		*--ptr = "0123456789abcdef"[n & 0x0f];
+		n >>= 4;
+	} while (n);
+
+	write(fd, ptr, (buf + sizeof(buf)) - ptr);
+}
+
 void	print_escape(int fd, const string_t *s) {
 	for (size_t i = 0; i < s->len; ++i) {
 		switch (s->ptr[i])

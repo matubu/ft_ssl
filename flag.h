@@ -25,6 +25,8 @@ typedef struct {
 	.name = _name, \
 	.type = _type, \
 	.description = _description, \
+	.present = 0, \
+	.argument = NULL, \
 })
 #define FLAG_NOOP FLAG(NULL, FlagNone, NULL)
 

@@ -84,7 +84,7 @@ int miller_rabin(uint64_t n, uint64_t k) {
 
 uint64_t random_prime(uint64_t bits) {
 	while (1) {
-		uint64_t n = random_range((uint64_t)1 << (bits - 1), ((uint64_t)1 << bits) - 2) | 1;
+		uint64_t n = random_range((uint64_t)1 << (bits - 1), ((uint64_t)1 << bits) - 1) | 1;
 
 		if (miller_rabin(n, PRIME_PRECISION)) {
 			return n;

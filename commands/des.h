@@ -218,8 +218,8 @@ uint64_t	parse_hex(const char *s) {
 }
 
 const char	*des_get_password(const arguments_t *args) {
-	if (args->flags['p'].argument)
-		return args->flags['p'].argument;
+	if (get_flag(args->flags, "-p")->argument)
+		return get_flag(args->flags, "-p")->argument;
 
 	char *pass = getpass("Enter password: ");
 
@@ -230,7 +230,7 @@ const char	*des_get_password(const arguments_t *args) {
 }
 
 uint64_t	des_get_salt(string_t *input, const arguments_t *args) {
-	if (args->flags['d'].present && input->len >= 16
+	if (get_flag(args->flags, "-d")->present && input->len >= 16
 		&& string_starts_with(*input, string_from_ptr("Salted__"))) {
 		uint64_t salt = *(uint64_t *)(input->ptr + 8);
 		string_t cleared_input = string_dup((string_t){ .ptr = input->ptr + 16, .len = input->len - 16 });
@@ -241,8 +241,8 @@ uint64_t	des_get_salt(string_t *input, const arguments_t *args) {
 		return salt;
 	}
 
-	if (args->flags['s'].present)
-		return uint64_endianess(parse_hex(args->flags['s'].argument), BIG_ENDIAN);
+	if (get_flag(args->flags, "-s")->present)
+		return uint64_endianess(parse_hex(get_flag(args->flags, "-s")->argument), BIG_ENDIAN);
 
 	srand(time(NULL) ^ clock());
 
@@ -260,10 +260,10 @@ uint64_t	*des_get_key(string_t *input, const arguments_t *args, string_t *salt_s
 	keys[0] = 0;
 	keys[1] = 0;
 
-	if (args->flags['k'].present) {
-		keys[0] = parse_hex(args->flags['k'].argument);
-		if (slen((uint8_t *)args->flags['k'].argument) > 16)
-			keys[1] = parse_hex(args->flags['k'].argument + 16);
+	if (get_flag(args->flags, "-k")->present) {
+		keys[0] = parse_hex(get_flag(args->flags, "-k")->argument);
+		if (slen((uint8_t *)get_flag(args->flags, "-k")->argument) > 16)
+			keys[1] = parse_hex(get_flag(args->flags, "-k")->argument + 16);
 		return keys;
 	}
 
@@ -294,12 +294,12 @@ typedef struct {
 }	des_t;
 
 string_t	des_postprocessing(des_t *des, const arguments_t *args) {
-	if (!args->flags['d'].present) {
+	if (!get_flag(args->flags, "-d")->present) {
 		des->output = string_join(des->salt_str, des->output, JOIN_FREE_B);
 	}
 	free(des->salt_str.ptr);
 
-	if (args->flags['d'].present && des->output.len > 0) {
+	if (get_flag(args->flags, "-d")->present && des->output.len > 0) {
 		size_t padding = des->output.ptr[des->output.len - 1];
 
 		if (padding > 8 || padding > des->output.len)
@@ -308,7 +308,7 @@ string_t	des_postprocessing(des_t *des, const arguments_t *args) {
 		des->output.len -= padding;
 	}
 
-	if (args->flags['a'].present && !args->flags['d'].present)
+	if (get_flag(args->flags, "-a")->present && !get_flag(args->flags, "-d")->present)
 		string_apply_inplace(&des->output, base64_encode);
 
 	return des->output;
@@ -317,14 +317,14 @@ string_t	des_postprocessing(des_t *des, const arguments_t *args) {
 des_t	des_init(string_t *input, const arguments_t *args) {
 	des_t des;
 
-	if (args->flags['a'].present && args->flags['d'].present)
+	if (get_flag(args->flags, "-a")->present && get_flag(args->flags, "-d")->present)
 		string_apply_inplace((string_t *)input, base64_decode);
 
 	des.salt_str = (string_t){ .len = 0, .ptr = NULL };
 	des.keys = des_get_key((string_t *)input, args, &des.salt_str);
-	key_schedule(des.subkeys, des.keys[0], args->flags['d'].present);
+	key_schedule(des.subkeys, des.keys[0], get_flag(args->flags, "-d")->present);
 
-	des.output = string_new((input->len / 8 + !(args->flags['d'].present)) * 8);
+	des.output = string_new((input->len / 8 + !(get_flag(args->flags, "-d")->present)) * 8);
 
 	return des;
 }
@@ -344,11 +344,11 @@ string_t	des_ecb_cipher(const string_t *input, const arguments_t *args) {
 string_t	des_cbc_cipher(const string_t *input, const arguments_t *args) {
 	des_t des = des_init((string_t *)input, args);
 
-	if (!args->flags['v'].argument) {
+	if (!get_flag(args->flags, "-v")->argument) {
 		DIE("No IV specified");
 	}
 
-	uint64_t iv = parse_hex(args->flags['v'].argument);
+	uint64_t iv = parse_hex(get_flag(args->flags, "-v")->argument);
 	uint64_t xor;
 	uint64_t xor_next = iv;
 

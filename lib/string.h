@@ -2,7 +2,11 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
+
 #include "lib/malloc.h"
+
+#define STATIC_LEN(x) (sizeof(x) - 1)
 
 int	is_print(char c) {
 	return (c >= ' ' && c <= '~');
@@ -106,7 +110,20 @@ int	string_starts_with(string_t s, string_t prefix) {
 		return (0);
 
 	for (size_t i = 0; i < prefix.len; ++i) {
-		if (s.ptr[i] != prefix.ptr[i])
+		if (s.ptr[i] != prefix.ptr[i]) {
+			return (0);
+		}
+	}
+
+	return (1);
+}
+
+int string_ends_with(string_t s, string_t suffix) {
+	if (s.len < suffix.len)
+		return (0);
+
+	for (size_t i = 0; i < suffix.len; ++i) {
+		if (s.ptr[s.len - suffix.len + i] != suffix.ptr[i])
 			return (0);
 	}
 

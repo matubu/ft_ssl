@@ -47,17 +47,18 @@ flag_t	genrsa_flags[] = {
 flag_t	rsa_flags[] = {
 	FLAG("-inform",  FlagArgument, "input format (PEM)"),
 	FLAG("-outform", FlagArgument, "output format (PEM)"),
-	/*TODO*/FLAG("-in",      FlagInputFile, "input file"),
-	/*TODO*/FLAG("-passin",  FlagArgument, "input file password source"),
-	/*TODO*/FLAG("-out",     FlagOutput,   "output file"),
-	/*TODO*/FLAG("-passout", FlagArgument, "output file password source"),
-	/*TODO*/FLAG("-des",     Flag,         "encrypt the generated key with DES in cbc mode"),
-	/*TODO*/FLAG("-text",    Flag,         "print the key in text form"),
-	/*TODO*/FLAG("-noout",   Flag,         "do not print key out"),
+	FLAG("-in",      FlagInputFile, "input file"),
+	/*USELESS*/FLAG("-passin",  FlagArgument, "input file password source"),
+	FLAG("-out",     FlagOutput,   "output file"),
+	/*USELESS*/FLAG("-passout", FlagArgument, "output file password source"),
+	/*USELESS*/FLAG("-des",     Flag,         "encrypt the generated key with DES in cbc mode"),
+	FLAG("-text",    Flag,         "print the key in text form"),
+	FLAG("-noout",   Flag,         "do not print key out"),
 	/*TODO*/FLAG("-modulus", Flag,         "print the RSA key modulus"),
 	/*TODO*/FLAG("-check",   Flag,         "verify key consistency"),
-	/*TODO*/FLAG("-pubin",   Flag,         "expect a public key in input file"),
-	/*TODO*/FLAG("-pubout",  Flag,         "output a public key"),
+	FLAG("-pubin",   Flag,         "expect a public key in input file"),
+	FLAG("-pubout",  Flag,         "output a public key"),
+	FLAG_NOOP
 };
 flag_t	rsautl[] = {
 	/*TODO*/FLAG("-in",      FlagInputFile, "input file"),
@@ -67,6 +68,7 @@ flag_t	rsautl[] = {
 	/*TODO*/FLAG("-encrypt", Flag,         "encrypt with public key"),
 	/*TODO*/FLAG("-decrypt", Flag,         "decrypt with private key (default)"),
 	/*TODO*/FLAG("-hexdump", Flag,         "hex dump output"),
+	FLAG_NOOP
 };
 
 const command_t	commands[] = {

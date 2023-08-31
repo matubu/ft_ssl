@@ -97,5 +97,6 @@ string_t	base64_decode(const string_t *input) {
 	return ((string_t){ .ptr = output_ptr, .len = j });
 
 error:
+	ERROR("Invalid base64 input");
 	return ((string_t){ .ptr = output_ptr, .len = 0 });
 }
