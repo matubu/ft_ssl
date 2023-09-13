@@ -1,12 +1,14 @@
 Name = ft_ssl
-Srcs = main.c
+Srcs = src/ft_ssl.c
 Deps = $(shell find . -type f -name '*.h') Makefile
-Flag = -Wall -Wextra -Werror -I. -g -fsanitize=address
+Flag = -Wall -Wextra -Werror -Isrc -g -fsanitize=address -Ofast -lm
+
+CC = gcc
 
 all: $(Name)
 
 $(Name): $(Srcs) $(Deps)
-	gcc $(Flag) -o $@ $(Srcs)
+	$(CC) $(Flag) -o $@ $(Srcs)
 
 clean:
 
@@ -14,6 +16,62 @@ fclean:
 	rm -rf $(Name)
 
 re: fclean all
+
+fuzz_build:
+	make re CC=afl-clang-fast
+
+fuzz_run:
+	# check if ID variable is set
+ifndef ID
+	$(error ID is not set)
+endif
+	afl-fuzz -M $(ID) -i seeds -o out -D -- ./ft_ssl
+
+fuzz_run_secondary:
+	# check if ID variable is set
+ifndef ID
+	$(error ID is not set)
+endif
+	afl-fuzz -S $(ID) -i seeds -o out -D -- ./ft_ssl
+
+fuzz_secondary:
+	# check if ID variable is set
+ifndef ID
+	$(error ID is not set)
+endif
+ifndef CPUID
+	$(error CPUID is not set)
+endif
+	docker run --cpuset-cpus=$(CPUID) -w=/src -ti -v $(shell pwd)/fuzz/env:/src aflplusplus/aflplusplus make fuzz_run_secondary ID=$(ID)
+
+fuzz_retrieve:
+	doas cp fuzz/env/out/*/hangs/* hangs
+	doas cp fuzz/env/out/*/crashes/* crashes/
+	doas chown -R $(shell id -u):$(shell id -g) fuzz hangs crashes
+
+# doas watch make fuzz_cleanup
+fuzz_cleanup:
+	find fuzz/env/ -type f -maxdepth 1 -not -name 'out' -not -name 'seeds' -not -name 'ft_ssl' -not -name 'Makefile' -delete
+	cp -r fuzz/files/* fuzz/env
+
+fuzz:
+	# check if ID variable is set
+ifndef ID
+	$(error ID is not set)
+endif
+	docker pull aflplusplus/aflplusplus
+	docker run -w=/src -ti -v $(shell pwd):/src aflplusplus/aflplusplus make fuzz_build
+
+	doas chown -R $(shell id -u):$(shell id -g) fuzz
+	mkdir -p fuzz/env
+	cp -r fuzz/seeds fuzz/env
+	cp -r fuzz/files/* fuzz/env
+	cp ft_ssl fuzz/env
+	cp Makefile fuzz/env
+
+	docker run -w=/src -ti -v $(shell pwd)/fuzz/env:/src aflplusplus/aflplusplus make fuzz_run ID=$(ID)
+
+# 96 edges
 
 test: all
 	echo "$$(curl 'https://google.com')" > original.html
@@ -26,7 +84,7 @@ test: all
 	./ft_ssl des-ecb -s 4242 -i original.html -o ciphertext.html -p "$$(cat password_file)"
 	openssl des-ecb -pbkdf2 -d -p -in ciphertext.html -out decrypted.html -pass "pass:$$(cat password_file)"
 
-	open decrypted.html
+	# open decrypted.html
 
 
 	./ft_ssl des -i main.c -v 0 -p "des" | openssl des -pbkdf2 -d -iv 0 -p -pass "pass:des"
@@ -40,4 +98,5 @@ test: all
 clean_test:
 	rm original.html ciphertext.html decrypted.html password_file out
 
-.PHONY = all clean fclean re test clean_test
+
+.PHONY: all clean fclean re fuzz test clean_test

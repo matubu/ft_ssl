@@ -1,0 +1,84 @@
+./ft_ssl des-ecb -pbkdf2 -S 4242 -p -in original.html -out ciphertext.html -pass
+./ft_ssl des-ecb -d -i ciphertext.html -o decrypted.html -p
+./ft_ssl des-ecb -s 4242 -d -i ciphertext.html -o decrypted.html -p
+./ft_ssl des-ecb -s 4242 -i original.html -o ciphertext.html -p
+./ft_ssl des-ecb -pbkdf2 -d -p -in ciphertext.html -out decrypted.html -pass
+./ft_ssl des -i main.c -v 0 -p
+./ft_ssl des-ede-cbc -pbkdf2 -pass
+./ft_ssl des-ede -i main.c -p
+./ft_ssl des-ede -in main.c -pbkdf2 -pass
+./ft_ssl des-ede -in main.c -K 12345678901234567890 -out outfile -p
+./ft_ssl des-ede -k 12345678901234567890 -i outfile -d
+./ft_ssl rsautl -inkey test_ft_pub -pubin -encrypt -raw
+./ft_ssl openssl rsautl -inkey test_ft -decrypt -raw
+./ft_ssl rsautl -inkey test_ft -encrypt -raw
+./ft_ssl rsautl -inkey test_ft -decrypt
+./ft_ssl rsautl -inkey test_ft -encrypt
+./ft_ssl openssl rsautl -inkey test_ft -decrypt -raw
+./ft_ssl rsautl -inkey test_ft -encrypt
+./ft_ssl rsautl -inkey test_ft -decrypt
+./ft_ssl rsautl -inkey test_ft -encrypt -raw
+./ft_ssl rsautl -inkey test_ft -encrypt
+ md5
+ sha224
+ sha256
+ sha384
+ sha512
+ sm3
+ base64
+ des
+ des-ecb
+ des-cbc
+ des-ede
+ genrsa
+ rsa
+ rsautl
+ -p
+ -q
+ -r
+ -s
+ -d
+ -e
+ -i
+ -o
+ -a
+ -d
+ -e
+ -i
+ -k
+ -o
+ -p
+ -s
+ -v
+ -out
+ -inform
+ -outform
+ -in
+ -passin
+ -out
+ -passout
+ -des
+ -text
+ -noout
+ -modulus
+ -check
+ -pubin
+ -pubout
+ -in
+ -out
+ -inkey
+ -pubin
+ -encrypt
+ -decrypt
+ -hexdump
+ 1
+ a8000
+ empty
+ hello_world
+ outfile
+ password_file
+ test_ft
+ test_ft_pub
+ test_std
+ test_std_pub
+ wrong_rsa_key

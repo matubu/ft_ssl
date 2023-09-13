@@ -2,3 +2,4 @@ ft_ssl
 .vscode
 *.o
 *.dSYM
+fuzz/env
